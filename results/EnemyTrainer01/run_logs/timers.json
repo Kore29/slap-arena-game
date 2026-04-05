@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1775401031",
+        "python_version": "3.9.6 (default, Jan  9 2026, 11:03:41) \n[Clang 17.0.0 (clang-1700.6.4.2)]",
+        "command_line_arguments": "/Users/kore/Documents/Code/Projects/slap-arena-game/venv/lib/python3.9/site-packages/mlagents/trainers/learn.py Config/SlapArenaTrainer.yaml --run-id=EnemyTrainer01",
+        "mlagents_version": "0.30.0",
+        "mlagents_envs_version": "0.30.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "1.11.0",
+        "numpy_version": "1.21.2",
+        "end_time_seconds": "1775401091"
+    },
+    "total": 60.568448833,
+    "count": 1,
+    "self": 0.013674373999997158,
+    "children": {
+        "run_training.setup": {
+            "total": 0.02070270900000004,
+            "count": 1,
+            "self": 0.02070270900000004
+        },
+        "TrainerController.start_learning": {
+            "total": 60.53407175,
+            "count": 1,
+            "self": 0.0006854580000066335,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 60.532877958,
+                    "count": 1,
+                    "self": 60.532877958
+                },
+                "TrainerController._save_models": {
+                    "total": 0.0005083339999956138,
+                    "count": 1,
+                    "self": 0.0005083339999956138
+                }
+            }
+        }
+    }
+}

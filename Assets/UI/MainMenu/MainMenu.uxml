@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="MainMenu.uss" />
+    <ui:VisualElement class="container">
+        <ui:Label text="SLAP ARENA ML" class="title" />
+        
+        <ui:VisualElement class="menu-box">
+            <ui:Button name="practice-btn" text="PRACTICE (OFFLINE)" class="button practice-btn" />
+            <ui:Button name="coop-btn" text="COOP (ONLINE)" class="button coop-btn" />
+            
+            <ui:VisualElement class="divider" />
+            
+            <ui:TextField name="relay-code-input" class="input-field" placeholder-text="Enter Relay Code" />
+            <ui:Button name="create-btn" text="CREATE ROOM (HOST)" class="button primary-btn" />
+            <ui:Button name="join-btn" text="JOIN ROOM (CLIENT)" class="button secondary-btn" />
+        </ui:VisualElement>
+
+        <ui:Label name="status-label" text="" class="status-label" />
+    </ui:VisualElement>
+</ui:UXML>

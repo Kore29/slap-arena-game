@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : NetworkBehaviour
@@ -9,48 +10,70 @@ public class PlayerController : NetworkBehaviour
     public float slapRadius = 2f;
     public LayerMask opponentLayer;
 
+    // A flag to force local mode even if NetworkManager exists (useful for practice)
+    public bool isLocalForce = false;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        // Tag the player to be easily identified by the ejection zone and ML agents
         gameObject.tag = "Player";
     }
+
+    private bool IsNetworkActive => !isLocalForce && NetworkManager.Singleton != null && IsSpawned;
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
         if (IsOwner)
         {
-            Debug.Log($"Local player spawned on network. OwnerId: {OwnerClientId}");
-        }
-        else
-        {
-            // If it's not the owner, we still sync physics via NetworkRigidbody,
-            // but we shouldn't let local physics interference happen
+            Debug.Log($"Network Player Spawned: {OwnerClientId}");
         }
     }
 
     private void Update()
     {
-        // Only process inputs for the local player
-        if (!IsOwner) return;
+        // Decision: Should we have control?
+        // 1. If Online -> only if IsOwner
+        // 2. If Offline -> always (since it's a local object)
+        bool hasControl = !IsNetworkActive || IsOwner;
+        
+        if (!hasControl) return;
 
-        // Task 3.2: Detect Mouse Clicks
-        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+        HandleInput();
+    }
+
+    private void HandleInput()
+    {
+        // 1. Mouse Clicks for Slapping
+        bool isClicking = Mouse.current != null && (Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame);
+        if (isClicking)
         {
-            // Left (0) or Right (1) click implies a slap forward
-            Vector3 forwardSlapDir = transform.forward;
+            Vector3 direction = transform.forward;
             
-            // Task 3.3: Request server to apply forces globally
-            SlapServerRpc(forwardSlapDir);
+            if (IsNetworkActive)
+            {
+                SlapServerRpc(direction);
+            }
+            else
+            {
+                // Local direct execution
+                PerformSlap(direction);
+            }
         }
 
-        // Basic WASD movement for human control placeholder (for testing)
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveZ = Input.GetAxisRaw("Vertical");
+        // 2. WASD Movement
+        float moveX = 0f;
+        float moveZ = 0f;
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) moveX += 1f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) moveX -= 1f;
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) moveZ += 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) moveZ -= 1f;
+        }
+        
         Vector3 moveInput = new Vector3(moveX, 0, moveZ).normalized;
-        if (moveInput.magnitude > 0)
+        if (moveInput.magnitude > 0.1f)
         {
             _rb.MovePosition(_rb.position + moveInput * 5f * Time.deltaTime);
             transform.forward = Vector3.Slerp(transform.forward, moveInput, Time.deltaTime * 10f);
@@ -60,24 +83,22 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc]
     private void SlapServerRpc(Vector3 direction, ServerRpcParams rpcParams = default)
     {
-        // Execute slap logic on the server
-        Debug.Log($"Slap initiated by Owner {rpcParams.Receive.SenderClientId}");
+        PerformSlap(direction);
+    }
 
-        // Physical cast to detect opponents in front of player
+    private void PerformSlap(Vector3 direction)
+    {
+        Debug.Log("Executing Slap logic...");
         Collider[] hits = Physics.OverlapSphere(transform.position + direction * 1f, slapRadius);
 
         foreach (var hit in hits)
         {
-            // Make sure we don't slap ourselves
             if (hit.gameObject == gameObject) continue;
 
-            // Apply force to opponent's Rigidbody
             Rigidbody targetRb = hit.GetComponent<Rigidbody>();
             if (targetRb != null)
             {
-                // Push them away with physical force
                 targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
-                Debug.Log($"Opponent hit! Applying force: {direction * slapForce}");
             }
         }
     }

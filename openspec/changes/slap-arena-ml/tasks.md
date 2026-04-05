@@ -17,14 +17,14 @@
 - [x] 3.4 Implement ejection logic (detect when a player crosses arena bounds)
 
 ## 4. UI Toolkit Implementation
-- [ ] 4.1 Create Main Menu UXML and USS
-- [ ] 4.2 Bind "Create Session" button to multiplayer Host logic
-- [ ] 4.3 Bind "Join Game" and input field for Relay code to Client logic
-- [ ] 4.4 Handle smooth UI transitions between menu and gameplay scene
+- [x] 4.1 Create Main Menu UXML and USS
+- [x] 4.2 Bind "Create Session" button to multiplayer Host logic
+- [x] 4.3 Bind "Join Game" and input field for Relay code to Client logic
+- [x] 4.4 Handle smooth UI transitions between menu and gameplay scene
 
 ## 5. ML-Agents Integration
-- [ ] 5.1 Define agent observations (position, opponent distance, arena edges)
-- [ ] 5.2 Define agent actions (movement forces, simulated slaps)
-- [ ] 5.3 Implement reward system (positive for touching/hitting opponent, extreme negative for falling off)
+- [x] 5.1 Define agent observations (position, opponent distance, arena edges)
+- [x] 5.2 Define agent actions (movement forces, simulated slaps)
+- [x] 5.3 Implement reward system (positive for touching/hitting opponent, extreme negative for falling off)
 - [ ] 5.4 Train the agent model (PPO) using fast timescale
 - [ ] 5.5 Integrate the final ONNX model into the enemy prefab for gameplay
