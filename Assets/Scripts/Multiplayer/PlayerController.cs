@@ -10,19 +10,19 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float lookSensitivity = 2f;
     [SerializeField] private Transform playerCamera;
     
-    public float slapForce = 25f; // Aumentado para mejor feedback (Punto 2.3)
+    public float slapForce = 50f; // Aumentado para compensar el damping (Punto 3.3)
     public float slapRadius = 0.5f; 
-    public float maxSlapDistance = 4f; // Aumentado ligeramente
+    public float maxSlapDistance = 4f; 
     public LayerMask opponentLayer;
 
-    // EVENTOS PARA HUD (Punto 2.2)
+    // EVENTOS PARA HUD
     public System.Action OnSlapHit;
 
     private float _verticalRotation = 0f;
     private float _lastSlapTime = 0f;
     private const float SlapCooldown = 0.5f;
 
-    // PROPIEDAD PARA HUD (Punto 2.1)
+    // PROPIEDAD PARA HUD
     public float CooldownProgress => Mathf.Clamp01((Time.time - _lastSlapTime) / SlapCooldown);
 
     // A flag to force local mode even if NetworkManager exists (useful for practice)
@@ -33,13 +33,14 @@ public class PlayerController : NetworkBehaviour
         _rb = GetComponent<Rigidbody>();
         gameObject.tag = "Player";
         
-        // Estabilizar física (Unity 6 Damping)
+        // Estabilizar física
         if (_rb != null)
         {
-            _rb.linearDamping = 5f;
-            _rb.angularDamping = 5f;
+            _rb.linearDamping = 0.1f; // Damping bajo para que la gravedad (Y) sea normal
+            _rb.angularDamping = 10f;
             _rb.useGravity = true;
             _rb.isKinematic = false;
+            _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
     }
 
@@ -135,6 +136,9 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleMovement()
     {
+        // SEGURIDAD: Si nos hemos caído, dejamos de forzar movimiento (Punto 2)
+        if (transform.position.y < -1f) return;
+
         float moveX = 0f;
         float moveZ = 0f;
         if (Keyboard.current != null)
@@ -145,16 +149,20 @@ public class PlayerController : NetworkBehaviour
             if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) moveZ -= 1f;
         }
 
-        // Task 2.1: Movimiento relativo a la vista
         Vector3 moveDirection = (transform.forward * moveZ + transform.right * moveX).normalized;
-        
-        // FUERZA FÍSICA (Fix): Si el sistema de red o ML-Agents lo puso en Kinematic, lo desactivamos aquí
         if (_rb.isKinematic) _rb.isKinematic = false;
 
-        // FISICA DE CAIDA (Fix): Usamos linearVelocity para que la gravedad actue en el eje Y
-        Vector3 playerVelocity = moveDirection * movementSpeed;
-        _rb.linearVelocity = new Vector3(playerVelocity.x, _rb.linearVelocity.y, playerVelocity.z);
-    }
+        Vector3 targetVelocity = moveDirection * movementSpeed;
+        Vector3 currentVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+        Vector3 velocityChange = targetVelocity - currentVelocity;
+
+        _rb.AddForce(velocityChange, ForceMode.VelocityChange);
+
+        // FRICCIÓN MANUAL (Punto 2): Como el damping global es 0, frenamos nosotros el eje XZ
+        if (moveDirection.magnitude < 0.1f)
+        {
+            _rb.linearVelocity = new Vector3(_rb.linearVelocity.x * 0.9f, _rb.linearVelocity.y, _rb.linearVelocity.z * 0.9f);
+        }    }
 
     [ServerRpc]
     private void SlapServerRpc(Vector3 direction, ServerRpcParams rpcParams = default)
@@ -166,29 +174,34 @@ public class PlayerController : NetworkBehaviour
     {
         Debug.Log("Executing Slap logic...");
         
-        // Task 3.1: SphereCast desde la cámara (Fix: Offset de origen para no golpearse a uno mismo)
         Vector3 cameraPos = playerCamera != null ? playerCamera.position : transform.position + Vector3.up * 0.8f;
-        Vector3 origin = cameraPos + direction * 0.5f; // Empezamos el rayo medio metro adelante
+        Vector3 origin = cameraPos + direction * 1f; // El centro de la burbuja un metro adelante
         
-        // Detectamos capas de oponente y el default, pero ignoramos nuestro propio collider
-        if (Physics.SphereCast(origin, slapRadius * 1.5f, direction, out RaycastHit hit, maxSlapDistance + 1f, opponentLayer | (1 << 0))) 
+        Collider[] hits = Physics.OverlapSphere(origin, slapRadius * 1.5f, opponentLayer | (1 << 0));
+        bool hitSuccessful = false;
+
+        foreach (var hit in hits)
         {
-            if (hit.collider.gameObject == gameObject) return;
+            if (hit.gameObject == gameObject) continue;
             
-            Debug.Log($"Slap Hit: {hit.collider.name}");
-            
-            Rigidbody targetRb = hit.collider.GetComponent<Rigidbody>();
+            Rigidbody targetRb = hit.GetComponent<Rigidbody>();
             if (targetRb != null)
             {
+                Debug.Log($"Slap Hit: {hit.name}");
+                
                 // Aplicar fuerza de empuje
                 targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
-                
-                // Disparar evento para que la UI se entere (Punto 2.2)
-                OnSlapHit?.Invoke();
-                
-                // Efecto de kick/retroceso (Punto 4)
-                if (IsOwner) StartCoroutine(ApplySlapKick());
+                hitSuccessful = true;
             }
+        }
+
+        if (hitSuccessful)
+        {
+            // Disparar evento para que la UI se entere
+            OnSlapHit?.Invoke();
+            
+            // Efecto de kick/retroceso
+            if (IsOwner) StartCoroutine(ApplySlapKick());
         }
     }
 
