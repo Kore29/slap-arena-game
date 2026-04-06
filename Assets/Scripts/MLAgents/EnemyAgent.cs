@@ -10,8 +10,8 @@ public class EnemyAgent : Agent
     private Rigidbody _rb;
     public Transform targetOpponent;
     
-    public float moveSpeed = 15f;
-    public float slapForce = 15f;
+    public float moveSpeed = 5f;
+    public float slapForce = 10f;
     public float slapRadius = 2f;
     private float _timeSinceLastSlap = 0f;
 
@@ -24,26 +24,18 @@ public class EnemyAgent : Agent
         {
             _rb.isKinematic = false;
             _rb.useGravity = true;
+            _rb.linearDamping = 5f;
+            _rb.angularDamping = 5f;
         }
-
-        // Si por algún motivo el nombre está mal en el inspector, 
-        // ML-Agents a veces no deja cambiarlo por código fácilmente, 
-        // pero vamos a asegurarnos de que el Rigidbody esté listo.
     }
 
     public override void OnEpisodeBegin()
     {
-        // Reset position on start or if they fall off the arena
-        transform.localPosition = new Vector3(Random.Range(-5f, 5f), 0.5f, Random.Range(-5f, 5f));
+        // Reset ONLY the agent's position to a safe spot on the platform
+        // Y=1.1f ensures we don't clip into the floor on spawn
+        transform.localPosition = new Vector3(Random.Range(-3f, 3f), 1.1f, Random.Range(-3f, 3f));
         _rb.linearVelocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
-        
-        // Also reset the opponent for a fresh scenario
-        if (targetOpponent != null)
-        {
-            targetOpponent.localPosition = new Vector3(Random.Range(-5f, 5f), 0.5f, Random.Range(-5f, 5f));
-            targetOpponent.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
-        }
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -68,6 +60,10 @@ public class EnemyAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        // LOG DE CONTROL: Para saber si la IA está recibiendo señales
+        // (Solo lo veremos una vez al segundo para no inundar la consola)
+        if (Time.frameCount % 50 == 0) Debug.Log("<color=cyan>🤖 IA viva y recibiendo órdenes...</color>");
+
         // SEGURIDAD: Evitar que el juego explote si el Inspector está mal configurado
         if (actions.ContinuousActions.Length < 2)
         {

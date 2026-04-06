@@ -22,12 +22,13 @@ public class EjectionZone : MonoBehaviour
         else
         {
             // Local Mode logic
-            if (other.CompareTag("Player") || other.GetComponent<EnemyAgent>() != null)
+            if (other.CompareTag("Player"))
             {
                 Debug.Log($"{other.name} fell out! Restarting practice...");
-                // In local practice, we can just reload the scene to reset everything
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
+            // Note: EnemyAgent handles its own reset in its internal Update() 
+            // so we don't need to reload the scene for it.
         }
     }
 }

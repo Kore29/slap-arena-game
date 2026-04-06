@@ -1,45 +1,23 @@
 {
-    "My Behavior": {
-        "checkpoints": [
-            {
-                "steps": 75264,
-                "file_path": "results/Practice01/My Behavior/My Behavior-75264.onnx",
-                "reward": null,
-                "creation_time": 1775422876.600252,
-                "auxillary_file_paths": [
-                    "results/Practice01/My Behavior/My Behavior-75264.pt"
-                ]
-            }
-        ],
-        "final_checkpoint": {
-            "steps": 75264,
-            "file_path": "results/Practice01/My Behavior.onnx",
-            "reward": null,
-            "creation_time": 1775422876.600252,
-            "auxillary_file_paths": [
-                "results/Practice01/My Behavior/My Behavior-75264.pt"
-            ]
-        }
-    },
     "EnemyBehavior": {
         "checkpoints": [
             {
-                "steps": 9856,
-                "file_path": "results/Practice01/EnemyBehavior/EnemyBehavior-9856.onnx",
+                "steps": 0,
+                "file_path": "results/Practice01/EnemyBehavior/EnemyBehavior-0.onnx",
                 "reward": null,
-                "creation_time": 1775422876.633528,
+                "creation_time": 1775423058.6271129,
                 "auxillary_file_paths": [
-                    "results/Practice01/EnemyBehavior/EnemyBehavior-9856.pt"
+                    "results/Practice01/EnemyBehavior/EnemyBehavior-0.pt"
                 ]
             }
         ],
         "final_checkpoint": {
-            "steps": 9856,
+            "steps": 0,
             "file_path": "results/Practice01/EnemyBehavior.onnx",
             "reward": null,
-            "creation_time": 1775422876.633528,
+            "creation_time": 1775423058.6271129,
             "auxillary_file_paths": [
-                "results/Practice01/EnemyBehavior/EnemyBehavior-9856.pt"
+                "results/Practice01/EnemyBehavior/EnemyBehavior-0.pt"
             ]
         }
     },

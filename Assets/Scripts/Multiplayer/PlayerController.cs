@@ -6,7 +6,8 @@ using UnityEngine.InputSystem;
 public class PlayerController : NetworkBehaviour
 {
     private Rigidbody _rb;
-    public float slapForce = 15f;
+    [SerializeField] private float movementSpeed = 8f;
+    public float slapForce = 10f;
     public float slapRadius = 2f;
     public LayerMask opponentLayer;
 
@@ -17,6 +18,15 @@ public class PlayerController : NetworkBehaviour
     {
         _rb = GetComponent<Rigidbody>();
         gameObject.tag = "Player";
+        
+        // Estabilizar física (Unity 6 Damping)
+        if (_rb != null)
+        {
+            _rb.linearDamping = 5f;
+            _rb.angularDamping = 5f;
+            _rb.useGravity = true;
+            _rb.isKinematic = false;
+        }
     }
 
     private bool IsNetworkActive => !isLocalForce && NetworkManager.Singleton != null && IsSpawned;
@@ -75,7 +85,7 @@ public class PlayerController : NetworkBehaviour
         Vector3 moveInput = new Vector3(moveX, 0, moveZ).normalized;
         if (moveInput.magnitude > 0.1f)
         {
-            _rb.MovePosition(_rb.position + moveInput * 5f * Time.deltaTime);
+            _rb.MovePosition(_rb.position + moveInput * movementSpeed * Time.deltaTime);
             transform.forward = Vector3.Slerp(transform.forward, moveInput, Time.deltaTime * 10f);
         }
     }
