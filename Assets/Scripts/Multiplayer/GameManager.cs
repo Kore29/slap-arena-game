@@ -15,6 +15,9 @@ public class GameManager : MonoBehaviour
 
     public enum GameMode { LocalPractice, PVP_Online, Coop_Online }
     public GameMode currentMode;
+    
+    [Header("UI")]
+    public GameHUD gameplayHUD;
 
     private void Awake()
     {
@@ -42,6 +45,12 @@ public class GameManager : MonoBehaviour
             // Connect them (the AI needs to know who its target is)
             var agent = ai.GetComponent<EnemyAgent>();
             if (agent != null) agent.targetOpponent = player.transform;
+
+            // Inicializar HUD (Punto 3.2)
+            if (gameplayHUD != null)
+            {
+                gameplayHUD.Initialize(player.GetComponent<PlayerController>());
+            }
         }
         else
         {

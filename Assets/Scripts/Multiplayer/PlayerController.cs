@@ -10,14 +10,20 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float lookSensitivity = 2f;
     [SerializeField] private Transform playerCamera;
     
-    public float slapForce = 15f; 
+    public float slapForce = 25f; // Aumentado para mejor feedback (Punto 2.3)
     public float slapRadius = 0.5f; 
-    public float maxSlapDistance = 3f;
+    public float maxSlapDistance = 4f; // Aumentado ligeramente
     public LayerMask opponentLayer;
+
+    // EVENTOS PARA HUD (Punto 2.2)
+    public System.Action OnSlapHit;
 
     private float _verticalRotation = 0f;
     private float _lastSlapTime = 0f;
     private const float SlapCooldown = 0.5f;
+
+    // PROPIEDAD PARA HUD (Punto 2.1)
+    public float CooldownProgress => Mathf.Clamp01((Time.time - _lastSlapTime) / SlapCooldown);
 
     // A flag to force local mode even if NetworkManager exists (useful for practice)
     public bool isLocalForce = false;
@@ -176,6 +182,9 @@ public class PlayerController : NetworkBehaviour
             {
                 // Aplicar fuerza de empuje
                 targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
+                
+                // Disparar evento para que la UI se entere (Punto 2.2)
+                OnSlapHit?.Invoke();
                 
                 // Efecto de kick/retroceso (Punto 4)
                 if (IsOwner) StartCoroutine(ApplySlapKick());

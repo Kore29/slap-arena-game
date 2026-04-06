@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="GameHUD.uss" />
+    <ui:VisualElement class="hud-container">
+        
+        <ui:VisualElement class="crosshair" />
+
+        <ui:VisualElement class="cooldown-area">
+            <ui:Label text="SLAP COOLDOWN" class="hud-label" />
+            <ui:VisualElement name="cooldown-bar-bg" class="progress-bg">
+                <ui:VisualElement name="cooldown-bar-fill" class="progress-fill" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="log-area">
+            <ui:Label name="hit-log-label" text="" class="hit-log fadeInOut" />
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

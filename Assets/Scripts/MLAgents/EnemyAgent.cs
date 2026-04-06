@@ -32,10 +32,14 @@ public class EnemyAgent : Agent
     public override void OnEpisodeBegin()
     {
         // Reset ONLY the agent's position to a safe spot on the platform
-        // Y=1.1f ensures we don't clip into the floor on spawn
         transform.localPosition = new Vector3(Random.Range(-3f, 3f), 1.1f, Random.Range(-3f, 3f));
-        _rb.linearVelocity = Vector3.zero;
-        _rb.angularVelocity = Vector3.zero;
+        
+        // Fix: Solo reseteamos velocidad si el cuerpo es físico en este micro-segundo
+        if (_rb != null && !_rb.isKinematic)
+        {
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+        }
     }
 
     public override void CollectObservations(VectorSensor sensor)
