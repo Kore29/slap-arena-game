@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4217135087465060444}
   - component: {fileID: 2719051239175012593}
   - component: {fileID: 3766433367287361027}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -148,13 +148,13 @@ GameObject:
   - component: {fileID: 7827000757252644966}
   - component: {fileID: 7529562785006635092}
   - component: {fileID: 4495903533481700619}
-  - component: {fileID: 1943023433413552742}
   - component: {fileID: 4135423127085578942}
   - component: {fileID: 6271032271048176380}
+  - component: {fileID: 1943023433413552742}
   - component: {fileID: 5369249560061862442}
   - component: {fileID: 2929230201439042054}
   - component: {fileID: -1015433542504459407}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: PlayerPrefab
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -234,29 +234,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &1943023433413552742
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6746595564172737140}
-  m_Material: {fileID: 1, guid: fb482de53f4f141ba9eeb3bd69216a22, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &4135423127085578942
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,7 +246,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3416767523
+  GlobalObjectIdHash: 473577053
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -293,13 +270,36 @@ MonoBehaviour:
   movementSpeed: 12
   lookSensitivity: 2
   playerCamera: {fileID: 6117964756156474882}
-  slapForce: 3
+  slapForce: 8
   slapRadius: 2
   maxSlapDistance: 3
   opponentLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 8
   isLocalForce: 0
+--- !u!136 &1943023433413552742
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6746595564172737140}
+  m_Material: {fileID: 1, guid: fb482de53f4f141ba9eeb3bd69216a22, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &5369249560061862442
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -309,8 +309,8 @@ Rigidbody:
   m_GameObject: {fileID: 6746595564172737140}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 7
-  m_AngularDamping: 0.05
+  m_LinearDamping: 1
+  m_AngularDamping: 10
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -326,7 +326,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 80
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &2929230201439042054
 MonoBehaviour:
   m_ObjectHideFlags: 0

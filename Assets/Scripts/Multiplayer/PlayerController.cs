@@ -10,7 +10,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float lookSensitivity = 2f;
     [SerializeField] private Transform playerCamera;
     
-    public float slapForce = 50f; // Aumentado para compensar el damping (Punto 3.3)
+    public float slapForce = 40f; 
     public float slapRadius = 2.0f; 
     public float maxSlapDistance = 4f; 
     public LayerMask opponentLayer;
@@ -33,14 +33,13 @@ public class PlayerController : NetworkBehaviour
         _rb = GetComponent<Rigidbody>();
         gameObject.tag = "Player";
         
-        // Estabilizar física
+        // CONFIGURACIÓN FÍSICA: Sincronizada con el Inspector
         if (_rb != null)
         {
-            _rb.linearDamping = 0.1f; // Damping bajo para que la gravedad (Y) sea normal
-            _rb.angularDamping = 10f;
             _rb.useGravity = true;
             _rb.isKinematic = false;
             _rb.interpolation = RigidbodyInterpolation.Interpolate;
+            _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
     }
 
@@ -81,15 +80,12 @@ public class PlayerController : NetworkBehaviour
         HandleLook();
         HandleSlapInput();
 
-        // AUTO-RESPAWN: Si el jugador se cae, vuelve a aparecer arriba para no parar el entrenamiento
-        if (transform.position.y < -0.5f)
-        {
-            Respawn();
-        }
+        // Se ha movido a FixedUpdate para evitar conflictos de teletransporte (Punto 2.2)
     }
 
     private void Respawn()
     {
+        Debug.Log($"<color=cyan>🔁 Jugador Respawneando desde {transform.position} | Frame: {Time.frameCount}</color>");
         _rb.linearVelocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
         
@@ -108,7 +104,19 @@ public class PlayerController : NetworkBehaviour
         bool hasControl = !IsNetworkActive || IsOwner;
         if (!hasControl) return;
 
+        // AUTO-RESPAWN: Ahora en FixedUpdate para mayor precisión física (Punto 2.2)
+        if (transform.position.y < -0.5f)
+        {
+            Respawn();
+        }
+
         HandleMovement();
+
+        // SPEED CLAMP: Limitar velocidad máxima para evitar eyecciones por colisión
+        if (_rb.linearVelocity.magnitude > 25f)
+        {
+            _rb.linearVelocity = Vector3.ClampMagnitude(_rb.linearVelocity, 25f);
+        }
     }
 
     private void HandleLook()
@@ -157,8 +165,8 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleMovement()
     {
-        // SEGURIDAD: Si nos hemos caído, dejamos de forzar movimiento (Punto 2)
-        if (transform.position.y < -1f) return;
+        // SEGURIDAD: Si nos hemos caído, dejamos de forzar movimiento
+        if (transform.position.y < -0.5f) return;
 
         float moveX = 0f;
         float moveZ = 0f;
@@ -177,7 +185,8 @@ public class PlayerController : NetworkBehaviour
         Vector3 currentVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
         Vector3 velocityChange = targetVelocity - currentVelocity;
 
-        _rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        // ACELERACIÓN: Usar modo Acceleration para respetar la masa y suavizar impactos
+        _rb.AddForce(velocityChange * 3f, ForceMode.Acceleration);
 
         // FRICCIÓN MANUAL (Punto 2): Como el damping global es 0, frenamos nosotros el eje XZ
         if (moveDirection.magnitude < 0.1f)
@@ -198,7 +207,8 @@ public class PlayerController : NetworkBehaviour
         Vector3 cameraPos = playerCamera != null ? playerCamera.position : transform.position + Vector3.up * 0.8f;
         Vector3 origin = cameraPos + direction; // El centro de la burbuja un metro adelante
         
-        Collider[] hits = Physics.OverlapSphere(origin, slapRadius, opponentLayer | (1 << 0));
+        // RESTRICCIÓN: Solo buscar en opponentLayer (Eliminada la capa Default para evitar bugs)
+        Collider[] hits = Physics.OverlapSphere(origin, slapRadius, opponentLayer);
         bool hitSuccessful = false;
 
         foreach (var hit in hits)

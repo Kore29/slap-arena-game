@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: -4662321255682597302}
   - component: {fileID: 2647064372455329600}
   - component: {fileID: 4985957736433344806}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: EnemyPrefab
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -160,12 +160,12 @@ MonoBehaviour:
   movementSpeed: 5
   lookSensitivity: 2
   playerCamera: {fileID: 0}
-  slapForce: 3
+  slapForce: 8
   slapRadius: 2
   maxSlapDistance: 3
   opponentLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 8
   isLocalForce: 0
 --- !u!54 &5369249560061862442
 Rigidbody:
@@ -176,8 +176,8 @@ Rigidbody:
   m_GameObject: {fileID: 6746595564172737140}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 7
-  m_AngularDamping: 0.05
+  m_LinearDamping: 1
+  m_AngularDamping: 10
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -193,7 +193,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 80
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &2929230201439042054
 MonoBehaviour:
   m_ObjectHideFlags: 0

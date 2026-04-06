@@ -11,7 +11,7 @@ public class EnemyAgent : Agent
     public Transform targetOpponent;
     
     public float moveSpeed = 5f;
-    public float slapForce = 50f;
+    public float slapForce = 30f; 
     public float slapRadius = 2f;
     public LayerMask opponentLayer;
     private float _timeSinceLastSlap = 0f;
@@ -20,25 +20,28 @@ public class EnemyAgent : Agent
     {
         _rb = GetComponent<Rigidbody>();
         
-        // FORZAR CONFIGURACIÓN FÍSICA (Punto 1.3)
+        // CONFIGURACIÓN FÍSICA: Usar valores del Inspector
         if (_rb != null)
         {
             _rb.isKinematic = false;
             _rb.useGravity = true;
-            _rb.linearDamping = 0.1f; // Damping sincronizado con el jugador (0.1f)
-            _rb.angularDamping = 10f;
             _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
     }
 
     public override void OnEpisodeBegin()
     {
-        // Reset ONLY the agent's position to a safe spot on the platform (subimos a Y=2 para evitar OOB -0.5)
-        transform.localPosition = new Vector3(Random.Range(-3f, 3f), 2.0f, Random.Range(-3f, 3f));
+        // LOG PROFUNDO: Para saber quién nos está teletransportando (Punto 1.1)
+        Debug.Log($"<color=orange>🔄 IA REINICIANDO EPISODIO | Pos actual: {transform.position} | Frame: {Time.frameCount}</color>");
+
+        // Reset FULL: Posición segura (Rango -2, 2 World Space), rotación limpia
+        transform.position = new Vector3(Random.Range(-2f, 2f), 1.0f, Random.Range(-2f, 2f));
+        transform.rotation = Quaternion.identity;
         
-        // Fix: Solo reseteamos velocidad si el cuerpo es físico en este micro-segundo
-        if (_rb != null && !_rb.isKinematic)
+        // Reset Físico Absoluto
+        if (_rb != null)
         {
+            _rb.isKinematic = false;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
         }
@@ -78,12 +81,19 @@ public class EnemyAgent : Agent
         
         if (_rb.isKinematic) _rb.isKinematic = false;
 
-        // NUEVO SISTEMA (Punto 2.2): Sincronizado con el jugador
+        // NUEVO SISTEMA: Aceleración suave para evitar explosiones físicas
         Vector3 targetVelocity = moveInput * moveSpeed;
-
         Vector3 currentVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
         Vector3 velocityChange = targetVelocity - currentVelocity;
-        _rb.AddForce(velocityChange, ForceMode.VelocityChange);
+        
+        // Aplicar aceleración en lugar de cambio instantáneo
+        _rb.AddForce(velocityChange * 2f, ForceMode.Acceleration);
+
+        // SPEED CLAMP: Evita que el agente salga volando al infinito tras un choque
+        if (_rb.linearVelocity.magnitude > 20f)
+        {
+            _rb.linearVelocity = Vector3.ClampMagnitude(_rb.linearVelocity, 20f);
+        }
 
         // FRICCIÓN MANUAL (Punto 2): Como el damping global es 0, frenamos nosotros el eje XZ
         if (moveInput.magnitude < 0.1f)
@@ -117,14 +127,22 @@ public class EnemyAgent : Agent
         }
 
         // TAREA 1.3: Recompensa de zona segura (fomentar no irse a los bordes)
-        float distToCenter = Vector3.Distance(transform.localPosition, Vector3.zero);
+        float distToCenter = Vector3.Distance(transform.position, Vector3.zero); // World space check
         if (distToCenter < 2.5f)
         {
-            AddReward(0.0001f);
+            AddReward(0.001f); // Recompensa aumentada de 0.0001f a 0.001f para supervivencia
         }
 
         // TAREA 1.1: Penalización por tiempo reducida para evitar "suicidios" prematuros
         AddReward(-0.0002f);
+
+        // DETECTOR DE CAÍDA (OOB): Ahora en FixedUpdate para mayor precisión física (Punto 2.1)
+        if (transform.position.y < -0.5f)
+        {
+            Debug.Log($"<color=red>IA Caída detectada en FixedUpdate a Y={transform.position.y}</color>");
+            SetReward(-2.0f);
+            EndEpisode();
+        }
     }
 
     private void ExecuteSlap()
@@ -140,8 +158,13 @@ public class EnemyAgent : Agent
             Rigidbody hitRb = hit.GetComponent<Rigidbody>();
             if (hitRb != null)
             {
-                hitRb.AddForce(transform.forward * slapForce, ForceMode.Impulse);
-                hitOpponent = true;
+                // PROTECCIÓN: Si la dirección es cero, no aplicamos fuerza (Punto 2.2)
+                Vector3 slapDir = transform.forward;
+                if (slapDir.sqrMagnitude > 0.001f)
+                {
+                    hitRb.AddForce(slapDir * slapForce, ForceMode.Impulse);
+                    hitOpponent = true;
+                }
             }
         }
 
@@ -155,11 +178,7 @@ public class EnemyAgent : Agent
     private void Update()
     {
         // 5.3 Implement extreme negative reward for falling off bounds
-        if (transform.localPosition.y < -0.5f)
-        {
-            SetReward(-2.0f);
-            EndEpisode();
-        }
+        // MOVIDO A FIXED UPDATE: Para evitar conflictos entre FPS y Motor de Físicas
 
         // TEST: Pulsa K para que la IA dé una bofetada (solo para probar el impulso)
         if (Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame) ExecuteSlap();
