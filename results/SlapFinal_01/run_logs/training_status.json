@@ -1,26 +1,4 @@
 {
-    "EnemyBehavior": {
-        "checkpoints": [
-            {
-                "steps": 444,
-                "file_path": "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-444.onnx",
-                "reward": -2.0186333656311035,
-                "creation_time": 1775473558.4330251,
-                "auxillary_file_paths": [
-                    "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-444.pt"
-                ]
-            }
-        ],
-        "final_checkpoint": {
-            "steps": 444,
-            "file_path": "results/SlapFinal_01/EnemyBehavior.onnx",
-            "reward": -2.0186333656311035,
-            "creation_time": 1775473558.4330251,
-            "auxillary_file_paths": [
-                "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-444.pt"
-            ]
-        }
-    },
     "metadata": {
         "stats_format_version": "0.3.0",
         "mlagents_version": "0.30.0",

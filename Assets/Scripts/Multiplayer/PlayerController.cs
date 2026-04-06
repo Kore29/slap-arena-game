@@ -11,7 +11,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private Transform playerCamera;
     
     public float slapForce = 50f; // Aumentado para compensar el damping (Punto 3.3)
-    public float slapRadius = 0.5f; 
+    public float slapRadius = 2.0f; 
     public float maxSlapDistance = 4f; 
     public LayerMask opponentLayer;
 
@@ -82,7 +82,7 @@ public class PlayerController : NetworkBehaviour
         HandleSlapInput();
 
         // AUTO-RESPAWN: Si el jugador se cae, vuelve a aparecer arriba para no parar el entrenamiento
-        if (transform.position.y < -7f)
+        if (transform.position.y < -0.5f)
         {
             Respawn();
         }
@@ -196,9 +196,9 @@ public class PlayerController : NetworkBehaviour
         Debug.Log("Executing Slap logic...");
         
         Vector3 cameraPos = playerCamera != null ? playerCamera.position : transform.position + Vector3.up * 0.8f;
-        Vector3 origin = cameraPos + direction * 1f; // El centro de la burbuja un metro adelante
+        Vector3 origin = cameraPos + direction; // El centro de la burbuja un metro adelante
         
-        Collider[] hits = Physics.OverlapSphere(origin, slapRadius * 1.5f, opponentLayer | (1 << 0));
+        Collider[] hits = Physics.OverlapSphere(origin, slapRadius, opponentLayer | (1 << 0));
         bool hitSuccessful = false;
 
         foreach (var hit in hits)

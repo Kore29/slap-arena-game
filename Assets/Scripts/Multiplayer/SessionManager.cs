@@ -20,6 +20,9 @@ public class SessionManager : MonoBehaviour
             return;
         }
         Instance = this;
+        
+        // Independizar del padre [MANAGERS] para evitar errores de Unity
+        if (transform.parent != null) transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
     }
 

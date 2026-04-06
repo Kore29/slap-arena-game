@@ -49,6 +49,9 @@ public class MainMenuController : MonoBehaviour
         {
             GameManager.Instance.StartLocalGame();
         }
+        
+        // APAGAR EL MENÚ: Evita que el menú siga escuchando clicks mientras juegas
+        gameObject.SetActive(false);
     }
 
     private void OnCoopClicked()

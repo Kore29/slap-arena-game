@@ -13,6 +13,7 @@ public class EnemyAgent : Agent
     public float moveSpeed = 5f;
     public float slapForce = 50f;
     public float slapRadius = 2f;
+    public LayerMask opponentLayer;
     private float _timeSinceLastSlap = 0f;
 
     public override void Initialize()
@@ -24,7 +25,7 @@ public class EnemyAgent : Agent
         {
             _rb.isKinematic = false;
             _rb.useGravity = true;
-            _rb.linearDamping = 7f; // Damping sincronizado con el jugador
+            _rb.linearDamping = 0.1f; // Damping sincronizado con el jugador (0.1f)
             _rb.angularDamping = 10f;
             _rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
@@ -32,8 +33,8 @@ public class EnemyAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        // Reset ONLY the agent's position to a safe spot on the platform
-        transform.localPosition = new Vector3(Random.Range(-3f, 3f), 1.1f, Random.Range(-3f, 3f));
+        // Reset ONLY the agent's position to a safe spot on the platform (subimos a Y=2 para evitar OOB -0.5)
+        transform.localPosition = new Vector3(Random.Range(-3f, 3f), 2.0f, Random.Range(-3f, 3f));
         
         // Fix: Solo reseteamos velocidad si el cuerpo es físico en este micro-segundo
         if (_rb != null && !_rb.isKinematic)
@@ -129,7 +130,7 @@ public class EnemyAgent : Agent
     private void ExecuteSlap()
     {
         _timeSinceLastSlap = 0f;
-        Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, slapRadius);
+        Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, slapRadius, opponentLayer);
 
         bool hitOpponent = false;
         foreach (var hit in hits)
@@ -137,7 +138,7 @@ public class EnemyAgent : Agent
             if (hit.gameObject == gameObject) continue;
             
             Rigidbody hitRb = hit.GetComponent<Rigidbody>();
-            if (hitRb != null && hit.CompareTag("Player"))
+            if (hitRb != null)
             {
                 hitRb.AddForce(transform.forward * slapForce, ForceMode.Impulse);
                 hitOpponent = true;
@@ -154,7 +155,7 @@ public class EnemyAgent : Agent
     private void Update()
     {
         // 5.3 Implement extreme negative reward for falling off bounds
-        if (transform.localPosition.y < -3f)
+        if (transform.localPosition.y < -0.5f)
         {
             SetReward(-2.0f);
             EndEpisode();

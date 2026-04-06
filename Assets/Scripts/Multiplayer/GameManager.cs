@@ -24,24 +24,35 @@ public class GameManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            Debug.Log($"<color=orange>⚠ Manager duplicado encontrado en {gameObject.name}. Borrando para evitar conflictos.</color>");
             Destroy(gameObject);
             return;
         }
+        
         Instance = this;
+        
+        // El Manager principal mandará a través de toda la partida
+        if (transform.parent != null) transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
+        
+        Debug.Log("<color=green>✔ GameManager Oficial Inicializado y Persistente.</color>");
     }
 
     public void StartLocalGame()
     {
         currentMode = GameMode.LocalPractice;
+        Debug.Log("<color=cyan>🎮 Iniciando Modo Práctica Offline...</color>");
         
-        // RE-CARREGA: Cargamos la escena y esperamos a que termine para spawnear (Punto 2)
+        // LIMPIEZA PREVENTIVA: Nos aseguramos de no estar suscritos dos veces
+        SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
         SceneManager.sceneLoaded += OnPracticeSceneLoaded;
+        
         SceneManager.LoadScene("PlatformArena");
     }
 
     private void OnPracticeSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"<color=cyan>📦 Escena Cargada: {scene.name}. Procediendo al Spawning...</color>");
         if (scene.name == "PlatformArena")
         {
             SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
@@ -55,7 +66,7 @@ public class GameManager : MonoBehaviour
         GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
         foreach (var p in oldPlayers) Destroy(p);
         
-        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsSortMode.None);
+        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsInactive.Exclude);
         foreach (var e in oldEnemies) Destroy(e.gameObject);
         
         // BIND: Reconectar las referencias que se perdieron al cambiar de escena

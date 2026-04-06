@@ -136,7 +136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3651179148
+  GlobalObjectIdHash: 2915027371
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -288,6 +288,9 @@ MonoBehaviour:
   moveSpeed: 15
   slapForce: 15
   slapRadius: 2
+  opponentLayer:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!114 &-4662321255682597302
 MonoBehaviour:
   m_ObjectHideFlags: 0
