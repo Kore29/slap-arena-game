@@ -8,6 +8,7 @@ using Unity.MLAgents.Actuators;
 public class EnemyAgent : Agent
 {
     private Rigidbody _rb;
+    private Animator _animator;
     public Transform targetOpponent;
     
     public float moveSpeed = 5f;
@@ -19,8 +20,9 @@ public class EnemyAgent : Agent
     public override void Initialize()
     {
         _rb = GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
         
-        // CONFIGURACIÓN FÍSICA: Usar valores del Inspector
+        // CONFIGURACIÓN FÍSICA: Sincronizada con el Inspector. Damping 1, Angular 10. (Punto 1.1)
         if (_rb != null)
         {
             _rb.isKinematic = false;
@@ -136,17 +138,34 @@ public class EnemyAgent : Agent
         // TAREA 1.1: Penalización por tiempo reducida para evitar "suicidios" prematuros
         AddReward(-0.0002f);
 
-        // DETECTOR DE CAÍDA (OOB): Ahora en FixedUpdate para mayor precisión física (Punto 2.1)
-        if (transform.position.y < -0.5f)
+        // DETECTOR DE CAÍDA (OOB): Ahora en FixedUpdate para        // Auto-Respawn si cae al vacío (Ajustado para islas flotantes)
+        if (transform.position.y < -10.0f)
         {
             Debug.Log($"<color=red>IA Caída detectada en FixedUpdate a Y={transform.position.y}</color>");
             SetReward(-2.0f);
             EndEpisode();
         }
+
+        // Sincronizar Animator (Task 3.2)
+        if (_animator != null)
+        {
+            // Usamos .velocity para máxima compatibilidad (Punto 3.2)
+            float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
+            _animator.SetFloat("Speed", horizontalSpeed / moveSpeed);
+            _animator.SetBool("IsFalling", transform.position.y < -0.5f);
+        }
     }
 
     private void ExecuteSlap()
     {
+        if (transform.position.y < -10.0f) return; // No golpear si estamos cayendo
+        
+        // Lanzar animación (Task 3.2)
+        if (_animator != null)
+        {
+            _animator.SetTrigger("Slap");
+        }
+
         _timeSinceLastSlap = 0f;
         Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, slapRadius, opponentLayer);
 

@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : NetworkBehaviour
 {
     private Rigidbody _rb;
+    private Animator _animator;
     [SerializeField] private float movementSpeed = 12f;
     [SerializeField] private float lookSensitivity = 2f;
     [SerializeField] private Transform playerCamera;
@@ -31,6 +32,7 @@ public class PlayerController : NetworkBehaviour
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
         gameObject.tag = "Player";
         
         // CONFIGURACIÓN FÍSICA: Sincronizada con el Inspector
@@ -105,9 +107,22 @@ public class PlayerController : NetworkBehaviour
         if (!hasControl) return;
 
         // AUTO-RESPAWN: Ahora en FixedUpdate para mayor precisión física (Punto 2.2)
-        if (transform.position.y < -0.5f)
+        if (transform.position.y < -10.0f)
         {
             Respawn();
+        }
+
+        // Enviar velocidad al Animator (Task 3.1)
+        if (_animator != null)
+        {
+            // Usamos .velocity para máxima compatibilidad (Task 3.1)
+            float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
+            _animator.SetFloat("Speed", horizontalSpeed / movementSpeed);
+            _animator.SetBool("IsFalling", transform.position.y < -0.5f);
+            Debug.Log($"Anim Debug: Speed={horizontalSpeed}");
+        }
+        else {
+            Debug.LogWarning("ANIM ERROR: No se encuentra el componente Animator en el Player!");
         }
 
         HandleMovement();
@@ -166,7 +181,7 @@ public class PlayerController : NetworkBehaviour
     private void HandleMovement()
     {
         // SEGURIDAD: Si nos hemos caído, dejamos de forzar movimiento
-        if (transform.position.y < -0.5f) return;
+        if (transform.position.y < -10.0f) return;
 
         float moveX = 0f;
         float moveZ = 0f;
@@ -202,6 +217,14 @@ public class PlayerController : NetworkBehaviour
 
     private void PerformSlap(Vector3 direction)
     {
+        if (transform.position.y < -10.0f) return; // No golpear si estamos cayendo
+        
+        // Lanzar animación (Task 3.1)
+        if (_animator != null)
+        {
+            _animator.SetTrigger("Slap");
+        }
+        
         Debug.Log("Executing Slap logic...");
         
         Vector3 cameraPos = playerCamera != null ? playerCamera.position : transform.position + Vector3.up * 0.8f;

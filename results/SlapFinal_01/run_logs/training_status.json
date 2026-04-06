@@ -1,4 +1,26 @@
 {
+    "EnemyBehavior": {
+        "checkpoints": [
+            {
+                "steps": 30063,
+                "file_path": "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-30063.onnx",
+                "reward": null,
+                "creation_time": 1775506134.529088,
+                "auxillary_file_paths": [
+                    "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-30063.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 30063,
+            "file_path": "results/SlapFinal_01/EnemyBehavior.onnx",
+            "reward": null,
+            "creation_time": 1775506134.529088,
+            "auxillary_file_paths": [
+                "results/SlapFinal_01/EnemyBehavior/EnemyBehavior-30063.pt"
+            ]
+        }
+    },
     "metadata": {
         "stats_format_version": "0.3.0",
         "mlagents_version": "0.30.0",
