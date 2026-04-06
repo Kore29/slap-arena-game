@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -33,7 +34,23 @@ public class GameManager : MonoBehaviour
     public void StartLocalGame()
     {
         currentMode = GameMode.LocalPractice;
+        
+        // RE-CARREGA: Cargamos la escena y esperamos a que termine para spawnear (Punto 2)
+        SceneManager.sceneLoaded += OnPracticeSceneLoaded;
+        SceneManager.LoadScene("PlatformArena");
+    }
 
+    private void OnPracticeSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "PlatformArena")
+        {
+            SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
+            ExecuteSpawning();
+        }
+    }
+
+    private void ExecuteSpawning()
+    {
         // LIMPIEZA: Borrar clones antiguos para evitar la "explosión de muñecos" (Punto 2)
         GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
         foreach (var p in oldPlayers) Destroy(p);
@@ -41,7 +58,7 @@ public class GameManager : MonoBehaviour
         EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsSortMode.None);
         foreach (var e in oldEnemies) Destroy(e.gameObject);
         
-        // BIND: Reconectar si volvemos del menú
+        // BIND: Reconectar las referencias que se perdieron al cambiar de escena
         if (playerSpawnPoint == null) playerSpawnPoint = GameObject.Find("PlayerSpawn")?.transform;
         if (enemySpawnPoint == null) enemySpawnPoint = GameObject.Find("EnemySpawn")?.transform;
         if (gameplayHUD == null) gameplayHUD = Object.FindAnyObjectByType<GameHUD>();
@@ -61,7 +78,7 @@ public class GameManager : MonoBehaviour
                 if (agent != null) agent.targetOpponent = player.transform;
             }
 
-            // Inicializar HUD (Punto 3.2)
+            // Inicializar HUD
             if (gameplayHUD != null)
             {
                 gameplayHUD.Initialize(player.GetComponent<PlayerController>());
@@ -69,7 +86,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("PlayerPrefab is missing in GameManager!");
+            Debug.LogError("Setup fallido: Revisa los SpawnPoints en la escena PlatformArena.");
         }
     }
 
