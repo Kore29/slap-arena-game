@@ -80,16 +80,6 @@ public class EnemyAgent : Agent
         // NUEVO SISTEMA (Punto 2.2): Sincronizado con el jugador
         Vector3 targetVelocity = moveInput * moveSpeed;
 
-        // PARADA POR PROXIMIDAD (Punto 2.3): Para que la IA no intente "atravesar" al jugador
-        if (targetOpponent != null)
-        {
-            float distance = Vector3.Distance(transform.position, targetOpponent.position);
-            if (distance < 1.5f) // Si está muy cerca, deja de forzar movimiento hacia adelante
-            {
-                targetVelocity = Vector3.zero;
-            }
-        }
-
         Vector3 currentVelocity = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
         Vector3 velocityChange = targetVelocity - currentVelocity;
         _rb.AddForce(velocityChange, ForceMode.VelocityChange);
@@ -171,7 +161,7 @@ public class EnemyAgent : Agent
         }
 
         // TEST: Pulsa K para que la IA dé una bofetada (solo para probar el impulso)
-        if (Input.GetKeyDown(KeyCode.K)) ExecuteSlap();
+        if (Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame) ExecuteSlap();
     }
 
     // TAREA 3.2: Implementar Heuristic vacío para satisfacer ML-Agents y evitar warnings (Punto 2)

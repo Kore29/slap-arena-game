@@ -33,18 +33,33 @@ public class GameManager : MonoBehaviour
     public void StartLocalGame()
     {
         currentMode = GameMode.LocalPractice;
+
+        // LIMPIEZA: Borrar clones antiguos para evitar la "explosión de muñecos" (Punto 2)
+        GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var p in oldPlayers) Destroy(p);
+        
+        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsSortMode.None);
+        foreach (var e in oldEnemies) Destroy(e.gameObject);
+        
+        // BIND: Reconectar si volvemos del menú
+        if (playerSpawnPoint == null) playerSpawnPoint = GameObject.Find("PlayerSpawn")?.transform;
+        if (enemySpawnPoint == null) enemySpawnPoint = GameObject.Find("EnemySpawn")?.transform;
+        if (gameplayHUD == null) gameplayHUD = Object.FindAnyObjectByType<GameHUD>();
         
         // Spawn Local Player
-        if (playerPrefab != null)
+        if (playerPrefab != null && playerSpawnPoint != null)
         {
             GameObject player = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
             
             // Spawn AI Agent
-            GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
-            
-            // Connect them (the AI needs to know who its target is)
-            var agent = ai.GetComponent<EnemyAgent>();
-            if (agent != null) agent.targetOpponent = player.transform;
+            if (aiAgentPrefab != null && enemySpawnPoint != null)
+            {
+                GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
+                
+                // Connect them
+                var agent = ai.GetComponent<EnemyAgent>();
+                if (agent != null) agent.targetOpponent = player.transform;
+            }
 
             // Inicializar HUD (Punto 3.2)
             if (gameplayHUD != null)

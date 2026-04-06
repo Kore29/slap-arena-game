@@ -105,7 +105,7 @@ engine_settings:
   no_graphics: false
 environment_parameters: null
 checkpoint_settings:
-  run_id: Practice02
+  run_id: SlapFinal_01
   initialize_from: null
   load_model: false
   resume: false

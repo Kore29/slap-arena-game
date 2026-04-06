@@ -80,6 +80,27 @@ public class PlayerController : NetworkBehaviour
 
         HandleLook();
         HandleSlapInput();
+
+        // AUTO-RESPAWN: Si el jugador se cae, vuelve a aparecer arriba para no parar el entrenamiento
+        if (transform.position.y < -7f)
+        {
+            Respawn();
+        }
+    }
+
+    private void Respawn()
+    {
+        _rb.linearVelocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
+        
+        if (GameManager.Instance != null && GameManager.Instance.playerSpawnPoint != null)
+        {
+            transform.position = GameManager.Instance.playerSpawnPoint.position;
+        }
+        else
+        {
+            transform.position = new Vector3(0, 2f, 0); // Failsafe
+        }
     }
 
     private void FixedUpdate()
@@ -187,7 +208,8 @@ public class PlayerController : NetworkBehaviour
             Rigidbody targetRb = hit.GetComponent<Rigidbody>();
             if (targetRb != null)
             {
-                Debug.Log($"Slap Hit: {hit.name}");
+                Debug.Log($"<color=yellow>HUBO GOLPE!: {hit.name} | Mass: {targetRb.mass} | Kinematic: {targetRb.isKinematic}</color>");
+                Debug.Log($"Fuerza: {slapForce} | Direccion: {direction}");
                 
                 // Aplicar fuerza de empuje
                 targetRb.AddForce(direction * slapForce, ForceMode.Impulse);

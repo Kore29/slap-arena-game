@@ -24,8 +24,10 @@ public class EjectionZone : MonoBehaviour
             // Local Mode logic
             if (other.CompareTag("Player"))
             {
-                Debug.Log($"{other.name} fell out! Restarting practice...");
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                // DESACTIVADO: Ahora el PlayerController maneja su propio Respawn (Punto 2)
+                // para evitar que se reinicie la escena y se rompa el entrenamiento de la IA.
+                Debug.Log($"{other.name} fell out! PlayerController will handle respawn.");
+                // SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
             // Note: EnemyAgent handles its own reset in its internal Update() 
             // so we don't need to reload the scene for it.
