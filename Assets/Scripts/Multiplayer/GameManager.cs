@@ -6,8 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Prefabs")]
-    public GameObject networkedPlayerPrefab;
-    public GameObject localPlayerPrefab;
+    public GameObject playerPrefab;
     public GameObject aiAgentPrefab;
 
     [Header("Spawn Points")]
@@ -33,14 +32,21 @@ public class GameManager : MonoBehaviour
         currentMode = GameMode.LocalPractice;
         
         // Spawn Local Player
-        GameObject player = Instantiate(localPlayerPrefab, playerSpawnPoint.position, Quaternion.identity);
-        
-        // Spawn AI Agent
-        GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
-        
-        // Connect them (the AI needs to know who its target is)
-        var agent = ai.GetComponent<EnemyAgent>();
-        if (agent != null) agent.targetOpponent = player.transform;
+        if (playerPrefab != null)
+        {
+            GameObject player = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
+            
+            // Spawn AI Agent
+            GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
+            
+            // Connect them (the AI needs to know who its target is)
+            var agent = ai.GetComponent<EnemyAgent>();
+            if (agent != null) agent.targetOpponent = player.transform;
+        }
+        else
+        {
+            Debug.LogError("PlayerPrefab is missing in GameManager!");
+        }
     }
 
     // This would be called from the SessionManager callbacks or NetworkManager events

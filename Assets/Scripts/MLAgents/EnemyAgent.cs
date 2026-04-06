@@ -82,6 +82,10 @@ public class EnemyAgent : Agent
         float moveZ = actions.ContinuousActions[1];
         
         Vector3 moveInput = new Vector3(moveX, 0, moveZ).normalized;
+        
+        // FUERZA FÍSICA (Fix): El componente Agent de ML-Agents a veces bloquea el Rigidbody
+        if (_rb.isKinematic) _rb.isKinematic = false;
+        
         _rb.AddForce(moveInput * moveSpeed, ForceMode.Force);
 
         // Face movement direction
