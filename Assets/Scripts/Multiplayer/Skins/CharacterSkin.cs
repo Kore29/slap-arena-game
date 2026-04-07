@@ -8,6 +8,7 @@ namespace SlapArena.Multiplayer
         public string skinName;
         public GameObject prefab;
         public Avatar avatar;
+        public float modelScale = 0.5f;
         
         [Header("Estructura de Huesos")]
         [Tooltip("Si el modelo tiene un nombre de hueso raíz distinto (ej: Armature), el sistema lo renombrará a este estándar.")]

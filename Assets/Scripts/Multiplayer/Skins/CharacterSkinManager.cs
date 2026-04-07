@@ -98,6 +98,7 @@ namespace SlapArena.Multiplayer
             // 2. Instanciar nueva skin
             _currentVisualInstance = Instantiate(skinData.prefab, skinContainer);
             _currentVisualInstance.name = skinData.targetRootName; // Coincidir con la ruta de la animación
+            _currentVisualInstance.transform.localScale = Vector3.one * skinData.modelScale;
 
             // 3. UNIFICAR JERARQUÍA (Runtime Bone Unification)
             // Buscamos el primer hijo (que debería ser el root del esqueleto) y lo renombreamos
