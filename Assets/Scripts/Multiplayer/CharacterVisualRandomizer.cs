@@ -16,6 +16,8 @@ namespace SlapArena.Multiplayer
         // Sincronización de red para el índice visual
         private NetworkVariable<int> visualIndex = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+        private Coroutine _activeCoroutine;
+
         private void Awake()
         {
             HideAllModels();
@@ -58,7 +60,8 @@ namespace SlapArena.Multiplayer
                 }
             }
             
-            UpdateVisuals(0, visualIndex.Value);
+            // ELIMINADA: La llamada manual UpdateVisuals(0, visualIndex.Value);
+            // El evento OnValueChanged ya se dispara al unirse o el if anterior lo maneja.
         }
 
         public override void OnNetworkDespawn()
@@ -77,33 +80,60 @@ namespace SlapArena.Multiplayer
 
         private void UpdateVisuals(int oldIndex, int newIndex)
         {
-            if (visuals == null || visuals.Length == 0) return;
+            if (gameObject.activeInHierarchy)
+            {
+                if (_activeCoroutine != null) StopCoroutine(_activeCoroutine);
+                _activeCoroutine = StartCoroutine(ApplyVisualsCoroutine(newIndex));
+            }
+        }
 
-            // Ocultar todos y activar solo el nuevo
+        private System.Collections.IEnumerator ApplyVisualsCoroutine(int index)
+        {
+            if (visuals == null || visuals.Length == 0) yield break;
+
+            Animator anim = GetComponent<Animator>();
+            if (anim == null) yield break;
+
+            float currentSpeed = anim.GetFloat("Speed");
+            bool currentFalling = anim.GetBool("IsFalling");
+
+            // 1. DESACTIVAR Y RESETEAR NOMBRES
+            anim.enabled = false;
             for (int i = 0; i < visuals.Length; i++)
             {
-                if (visuals[i] != null)
+                if (visuals[i] != null) 
                 {
-                    visuals[i].SetActive(i == newIndex);
+                    visuals[i].SetActive(false);
+                    // Restaurar nombre original para no tener duplicados
+                    if (visuals[i].name == "CharacterModel") visuals[i].name = visuals[i].name.Replace("CharacterModel", $"Visual_{i}");
                 }
             }
 
-            // CAMBIO CLAVE: Actualizar el Avatar del Animator (Task 3.3)
-            Animator anim = GetComponent<Animator>();
-            if (anim != null && avatars != null && newIndex < avatars.Length)
+            // 2. ACTIVAR Y RENOMBRAR EL SELECCIONADO
+            // Esto es vital: el Animator encontrará los huesos si el objeto padre se llama siempre igual
+            GameObject selected = visuals[index];
+            selected.name = "CharacterModel";
+            selected.SetActive(true);
+
+            // Esperar un frame para que Unity registre el cambio de jerarquía
+            yield return null;
+
+            // 3. RE-VINCULACIÓN DIRECTA
+            if (avatars != null && index < avatars.Length && avatars[index] != null)
             {
-                if (avatars[newIndex] != null)
-                {
-                    // Desactivar y activar el Animator suele "forzar" que el avatar se asiente bien
-                    anim.enabled = false;
-                    anim.avatar = avatars[newIndex];
-                    anim.enabled = true;
-                    
-                    anim.Rebind(); 
-                    anim.Update(0); // Forzar un frame de actualización
-                    Debug.Log($"[Randomizer] Cambiada skin a {newIndex} y asignado Avatar: {avatars[newIndex].name}");
-                }
+                anim.avatar = avatars[index];
+                anim.enabled = true;
+                anim.Rebind();
+                
+                // Restaurar parámetros inmediatamente
+                anim.SetFloat("Speed", currentSpeed);
+                anim.SetBool("IsFalling", currentFalling);
+                anim.Update(0);
+                
+                Debug.Log($"[Randomizer] MASTER FIX - Skin {index} renamed to CharacterModel | Avatar: {avatars[index].name}");
             }
+
+            _activeCoroutine = null;
         }
     }
 }

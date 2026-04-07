@@ -62,12 +62,15 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteSpawning()
     {
-        // LIMPIEZA: Borrar clones antiguos para evitar la "explosión de muñecos" (Punto 2)
+        // LIMPIEZA: Borrar clones antiguos inmediatamente
         GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var p in oldPlayers) Destroy(p);
+        foreach (var p in oldPlayers) {
+            p.tag = "Untagged"; // Evitar que se encuentren en el siguiente frame
+            DestroyImmediate(p);
+        }
         
-        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsInactive.Exclude);
-        foreach (var e in oldEnemies) Destroy(e.gameObject);
+        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsInactive.Include);
+        foreach (var e in oldEnemies) DestroyImmediate(e.gameObject);
         
         // BIND: Reconectar las referencias que se perdieron al cambiar de escena
         if (playerSpawnPoint == null) playerSpawnPoint = GameObject.Find("PlayerSpawn")?.transform;

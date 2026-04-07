@@ -113,13 +113,12 @@ public class PlayerController : NetworkBehaviour
         }
 
         // Enviar velocidad al Animator (Task 3.1)
-        if (_animator != null)
+        if (_animator != null && _animator.runtimeAnimatorController != null)
         {
             // Usamos .velocity para máxima compatibilidad (Task 3.1)
             float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
             _animator.SetFloat("Speed", horizontalSpeed / movementSpeed);
             _animator.SetBool("IsFalling", transform.position.y < -0.5f);
-            Debug.Log($"Anim Debug: Speed={horizontalSpeed}");
         }
         else {
             Debug.LogWarning("ANIM ERROR: No se encuentra el componente Animator en el Player!");

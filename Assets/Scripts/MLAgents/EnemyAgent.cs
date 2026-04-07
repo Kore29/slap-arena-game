@@ -147,7 +147,7 @@ public class EnemyAgent : Agent
         }
 
         // Sincronizar Animator (Task 3.2)
-        if (_animator != null)
+        if (_animator != null && _animator.runtimeAnimatorController != null)
         {
             // Usamos .velocity para máxima compatibilidad (Punto 3.2)
             float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
