@@ -33,9 +33,6 @@ public class EnemyAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        // LOG PROFUNDO: Para saber quién nos está teletransportando (Punto 1.1)
-        Debug.Log($"<color=orange>🔄 IA REINICIANDO EPISODIO | Pos actual: {transform.position} | Frame: {Time.frameCount}</color>");
-
         // Reset FULL: Posición segura (Rango -2, 2 World Space), rotación limpia
         transform.position = new Vector3(Random.Range(-2f, 2f), 1.0f, Random.Range(-2f, 2f));
         transform.rotation = Quaternion.identity;
@@ -71,9 +68,6 @@ public class EnemyAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        // LOG DE CONTROL: Para saber si la IA está recibiendo señales
-        if (Time.frameCount % 50 == 0) Debug.Log("<color=cyan>🤖 IA viva y recibiendo órdenes...</color>");
-
         if (actions.ContinuousActions.Length < 2) return;
 
         // 5.2 Define agent actions (movement forces)
@@ -91,17 +85,23 @@ public class EnemyAgent : Agent
         // Aplicar aceleración en lugar de cambio instantáneo
         _rb.AddForce(velocityChange * 2f, ForceMode.Acceleration);
 
+        // --- MEJORA DE CAÍDA ---
+        // Si estamos en el aire (Y < 0.5 o lejos del suelo), reducimos la fuerza horizontal 
+        // para que la gravedad no tenga "competencia"
+        if (transform.position.y < 0.8f && !Physics.Raycast(transform.position, Vector3.down, 1.5f, opponentLayer | (1 << 0))) // 1<<0 es Default
+        {
+            // Estamos cayendo o en el borde: frenamos el empuje horizontal de la IA
+            _rb.linearVelocity = new Vector3(_rb.linearVelocity.x * 0.95f, _rb.linearVelocity.y, _rb.linearVelocity.z * 0.95f);
+        }
+
         // SPEED CLAMP: Evita que el agente salga volando al infinito tras un choque
         if (_rb.linearVelocity.magnitude > 20f)
         {
             _rb.linearVelocity = Vector3.ClampMagnitude(_rb.linearVelocity, 20f);
         }
 
-        // FRICCIÓN MANUAL (Punto 2): Como el damping global es 0, frenamos nosotros el eje XZ
-        if (moveInput.magnitude < 0.1f)
-        {
-            _rb.linearVelocity = new Vector3(_rb.linearVelocity.x * 0.9f, _rb.linearVelocity.y, _rb.linearVelocity.z * 0.9f);
-        }
+        // FRICCIÓN: Eliminamos la fricción manual que podría estar interfiriendo con la red/gravedad
+        // El Rigidbody ya tiene Linear Damping: 1, que es suficiente.
 
         // Face movement direction
         if (moveInput.magnitude > 0.1f)
@@ -138,13 +138,13 @@ public class EnemyAgent : Agent
         // TAREA 1.1: Penalización por tiempo reducida para evitar "suicidios" prematuros
         AddReward(-0.0002f);
 
-        // DETECTOR DE CAÍDA (OOB): Ahora en FixedUpdate para        // Auto-Respawn si cae al vacío (Ajustado para islas flotantes)
+        // DETECTOR DE CAÍDA (OOB)
         if (transform.position.y < -10.0f)
         {
-            Debug.Log($"<color=red>IA Caída detectada en FixedUpdate a Y={transform.position.y}</color>");
             SetReward(-2.0f);
             EndEpisode();
         }
+
 
         // Sincronizar Animator (Task 3.2)
         if (_animator != null && _animator.runtimeAnimatorController != null)
