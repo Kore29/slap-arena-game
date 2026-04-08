@@ -77,6 +77,19 @@ public class GameManager : MonoBehaviour
         if (enemySpawnPoint == null) enemySpawnPoint = GameObject.Find("EnemySpawn")?.transform;
         if (gameplayHUD == null) gameplayHUD = Object.FindAnyObjectByType<GameHUD>();
         
+        // --- AMBIENTE DINÁMICO ---
+        MapGenerator mapDecorator = Object.FindAnyObjectByType<MapGenerator>();
+        if (mapDecorator != null)
+        {
+            // Configurar zonas de exclusión
+            var excl = new System.Collections.Generic.List<Transform>();
+            if (playerSpawnPoint != null) excl.Add(playerSpawnPoint);
+            if (enemySpawnPoint != null) excl.Add(enemySpawnPoint);
+            
+            mapDecorator.SetExclusionPoints(excl);
+            mapDecorator.CleanAndGenerate(Random.Range(0, 999999));
+        }
+        
         // Spawn Local Player
         if (playerPrefab != null && playerSpawnPoint != null)
         {
