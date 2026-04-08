@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b42b74cb10404c66953604fae749087, type: 3}
   m_Name: Skin_Blond
   m_EditorClassIdentifier: Assembly-CSharp::SlapArena.Multiplayer.CharacterSkin
-  skinName: 
-  prefab: {fileID: 0}
-  avatar: {fileID: 0}
+  skinName: Blond
+  prefab: {fileID: 919132149155446097, guid: 4c0d680fb42354a72a3d0a840da0463d, type: 3}
+  avatar: {fileID: 9000000, guid: 4c0d680fb42354a72a3d0a840da0463d, type: 3}
+  modelScale: 0.5
   targetRootName: CharacterArmature
