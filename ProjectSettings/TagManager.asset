@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Enemy
   - Arena
+  - SpawnPointA
+  - SpawnPointB
   layers:
   - Default
   - TransparentFX

@@ -5,12 +5,17 @@
         
         <ui:VisualElement class="menu-box">
             <ui:Button name="practice-btn" text="PRACTICE (OFFLINE)" class="button practice-btn" />
-            <ui:Button name="coop-btn" text="COOP (ONLINE)" class="button coop-btn" />
+            
+            <ui:VisualElement class="divider" />
+            <ui:Label text="CREATE MATCH" class="status-label" style="margin-top: 0; margin-bottom: 10px; font-size: 10px;" />
+            
+            <ui:Button name="btn-1vs1" text="1 VS 1 DUEL" class="button primary-btn" />
+            <ui:Button name="btn-teams" text="TEAM DUEL (3vs3)" class="button coop-btn" />
+            <ui:Button name="btn-ffa" text="FREE FOR ALL" class="button practice-btn" />
             
             <ui:VisualElement class="divider" />
             
             <ui:TextField name="relay-code-input" class="input-field" placeholder-text="Enter Relay Code" />
-            <ui:Button name="create-btn" text="CREATE ROOM (HOST)" class="button primary-btn" />
             <ui:Button name="join-btn" text="JOIN ROOM (CLIENT)" class="button secondary-btn" />
         </ui:VisualElement>
 

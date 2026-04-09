@@ -10,12 +10,15 @@ public class GameManager : MonoBehaviour
     public GameObject playerPrefab;
     public GameObject aiAgentPrefab;
 
-    [Header("Spawn Points")]
+    [Header("Spawn Points (Old)")]
     public Transform playerSpawnPoint;
     public Transform enemySpawnPoint;
 
-    public enum GameMode { LocalPractice, PVP_Online, Coop_Online }
-    public GameMode currentMode;
+    [Header("Game Mode Configuration")]
+    public GameModeData currentModeData;
+    
+    public enum GameState { MainMenu, Lobby, Playing, Results }
+    public GameState currentState = GameState.MainMenu;
     
     [Header("UI")]
     public GameHUD gameplayHUD;
@@ -31,7 +34,6 @@ public class GameManager : MonoBehaviour
         
         Instance = this;
         
-        // El Manager principal mandará a través de toda la partida
         if (transform.parent != null) transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
         
@@ -40,10 +42,9 @@ public class GameManager : MonoBehaviour
 
     public void StartLocalGame()
     {
-        currentMode = GameMode.LocalPractice;
+        currentState = GameState.Playing;
         Debug.Log("<color=cyan>🎮 Iniciando Modo Práctica Offline...</color>");
         
-        // LIMPIEZA PREVENTIVA: Nos aseguramos de no estar suscritos dos veces
         SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
         SceneManager.sceneLoaded += OnPracticeSceneLoaded;
         
@@ -52,7 +53,6 @@ public class GameManager : MonoBehaviour
 
     private void OnPracticeSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"<color=cyan>📦 Escena Cargada: {scene.name}. Procediendo al Spawning...</color>");
         if (scene.name == "PlatformArena")
         {
             SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
@@ -62,15 +62,9 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteSpawning()
     {
-        // LIMPIEZA: Borrar clones antiguos inmediatamente
+        // Limpieza de objetos antiguos
         GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var p in oldPlayers) {
-            p.tag = "Untagged"; // Evitar que se encuentren en el siguiente frame
-            DestroyImmediate(p);
-        }
-        
-        EnemyAgent[] oldEnemies = Object.FindObjectsByType<EnemyAgent>(FindObjectsInactive.Include);
-        foreach (var e in oldEnemies) DestroyImmediate(e.gameObject);
+        foreach (var p in oldPlayers) DestroyImmediate(p);
         
         // BIND: Reconectar las referencias que se perdieron al cambiar de escena
         if (playerSpawnPoint == null) playerSpawnPoint = GameObject.Find("PlayerSpawn")?.transform;
@@ -81,7 +75,6 @@ public class GameManager : MonoBehaviour
         MapGenerator mapDecorator = Object.FindAnyObjectByType<MapGenerator>();
         if (mapDecorator != null)
         {
-            // Configurar zonas de exclusión
             var excl = new System.Collections.Generic.List<Transform>();
             if (playerSpawnPoint != null) excl.Add(playerSpawnPoint);
             if (enemySpawnPoint != null) excl.Add(enemySpawnPoint);
@@ -99,38 +92,78 @@ public class GameManager : MonoBehaviour
             if (aiAgentPrefab != null && enemySpawnPoint != null)
             {
                 GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
-                
                 // Connect them
                 var agent = ai.GetComponent<EnemyAgent>();
                 if (agent != null) agent.targetOpponent = player.transform;
             }
 
-            // Inicializar HUD
-            if (gameplayHUD != null)
-            {
-                gameplayHUD.Initialize(player.GetComponent<PlayerController>());
-            }
-        }
-        else
-        {
-            Debug.LogError("Setup fallido: Revisa los SpawnPoints en la escena PlatformArena.");
+            if (gameplayHUD != null) gameplayHUD.Initialize(player.GetComponent<PlayerController>());
         }
     }
 
-    // This would be called from the SessionManager callbacks or NetworkManager events
     public void StartNetworkedGame(bool isCoop)
     {
-        currentMode = isCoop ? GameMode.Coop_Online : GameMode.PVP_Online;
+        currentState = GameState.Lobby;
         
-        // In Netcode, the NetworkManager handles spawning of "Player Prefab".
-        // But for Coop AIs, only the Server/Host should spawn them.
-        if (NetworkManager.Singleton.IsServer)
+        if (NetworkManager.Singleton.IsHost)
         {
-            if (isCoop)
+            SessionManager.Instance.InitializeLobby(currentModeData);
+        }
+
+        // Suscribirse a la carga de la escena de juego
+        SceneManager.sceneLoaded -= OnNetworkedSceneLoaded;
+        SceneManager.sceneLoaded += OnNetworkedSceneLoaded;
+
+        // Cargar escena para todos (via NetworkManager si estamos en sesión, pero aquí es inicio local antes del cambio)
+        // Usaremos el NetworkSceneManager una vez estemos bien conectados
+        SceneManager.LoadScene("PlatformArena");
+    }
+
+    private void OnNetworkedSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "PlatformArena")
+        {
+            SceneManager.sceneLoaded -= OnNetworkedSceneLoaded;
+            if (NetworkManager.Singleton.IsServer)
             {
-                // Spawn AI agents as NetworkObjects
-                GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
-                ai.GetComponent<NetworkObject>().Spawn();
+                ExecuteNetworkedSpawning();
+            }
+        }
+    }
+
+    private void ExecuteNetworkedSpawning()
+    {
+        Debug.Log("<color=cyan>🌐 Iniciando Spawning de Red...</color>");
+        
+        // Buscar todos los puntos de spawn
+        GameObject[] teamASpawns = GameObject.FindGameObjectsWithTag("SpawnPointA");
+        GameObject[] teamBSpans = GameObject.FindGameObjectsWithTag("SpawnPointB");
+        
+        int aIdx = 0;
+        int bIdx = 0;
+
+        foreach (var slot in SessionManager.Instance.lobbySlots)
+        {
+            Transform spawnPoint = null;
+            if (slot.TeamId == 0) spawnPoint = teamASpawns[aIdx++ % teamASpawns.Length].transform;
+            else spawnPoint = teamBSpans[bIdx++ % teamBSpans.Length].transform;
+
+            if (slot.IsBot)
+            {
+                GameObject bot = Instantiate(aiAgentPrefab, spawnPoint.position, rotation: spawnPoint.rotation);
+                NetworkObject nb = bot.GetComponent<NetworkObject>();
+                nb.Spawn();
+                
+                // Configurar Bot (Nickname, Equipo)
+                // TODO: Sync bot data
+            }
+            else
+            {
+                // El player prefab se suele spawnear automáticamente por NGO si está en el NetworkManager, 
+                // pero si queremos control total:
+                GameObject player = Instantiate(playerPrefab, spawnPoint.position, rotation: spawnPoint.rotation);
+                NetworkObject nb = player.GetComponent<NetworkObject>();
+                nb.SpawnAsPlayerObject(slot.ClientId);
             }
         }
     }

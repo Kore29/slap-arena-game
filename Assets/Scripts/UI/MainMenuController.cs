@@ -5,9 +5,15 @@ public class MainMenuController : MonoBehaviour
 {
     public UIDocument uiDocument;
 
+    [Header("Game Mode Data Settings")]
+    public GameModeData mode1vs1;
+    public GameModeData modeTeams;
+    public GameModeData modeFFA;
+
     private Button _practiceBtn;
-    private Button _coopBtn;
-    private Button _createBtn;
+    private Button _btn1vs1;
+    private Button _btnTeams;
+    private Button _btnFFA;
     private Button _joinBtn;
     private TextField _relayCodeInput;
     private Label _statusLabel;
@@ -22,23 +28,28 @@ public class MainMenuController : MonoBehaviour
         
         _container = root.Q<VisualElement>(className: "container");
         _practiceBtn = root.Q<Button>("practice-btn");
-        _coopBtn = root.Q<Button>("coop-btn");
-        _createBtn = root.Q<Button>("create-btn");
+        
+        _btn1vs1 = root.Q<Button>("btn-1vs1");
+        _btnTeams = root.Q<Button>("btn-teams");
+        _btnFFA = root.Q<Button>("btn-ffa");
+        
         _joinBtn = root.Q<Button>("join-btn");
         _relayCodeInput = root.Q<TextField>("relay-code-input");
         _statusLabel = root.Q<Label>("status-label");
 
         _practiceBtn.clicked += OnPracticeClicked;
-        _coopBtn.clicked += OnCoopClicked;
-        _createBtn.clicked += OnCreateSessionClicked;
+        _btn1vs1.clicked += () => OnModeSelected(mode1vs1);
+        _btnTeams.clicked += () => OnModeSelected(modeTeams);
+        _btnFFA.clicked += () => OnModeSelected(modeFFA);
         _joinBtn.clicked += OnJoinGameClicked;
     }
 
     private void OnDisable()
     {
         _practiceBtn.clicked -= OnPracticeClicked;
-        _coopBtn.clicked -= OnCoopClicked;
-        _createBtn.clicked -= OnCreateSessionClicked;
+        _btn1vs1.clicked -= () => OnModeSelected(mode1vs1);
+        _btnTeams.clicked -= () => OnModeSelected(modeTeams);
+        _btnFFA.clicked -= () => OnModeSelected(modeFFA);
         _joinBtn.clicked -= OnJoinGameClicked;
     }
 
@@ -49,24 +60,27 @@ public class MainMenuController : MonoBehaviour
         {
             GameManager.Instance.StartLocalGame();
         }
-        
-        // APAGAR EL MENÚ: Evita que el menú siga escuchando clicks mientras juegas
         gameObject.SetActive(false);
     }
 
-    private void OnCoopClicked()
+    private void OnModeSelected(GameModeData mode)
     {
-        OnCreateSessionClicked(true); // Host with Coop flag
+        if (mode == null)
+        {
+            _statusLabel.text = "Error: GameModeData not assigned!";
+            return;
+        }
+
+        GameManager.Instance.currentModeData = mode;
+        StartHostSession(mode);
     }
 
-    private void OnCreateSessionClicked() { OnCreateSessionClicked(false); }
-
-    private async void OnCreateSessionClicked(bool isCoop)
+    private async void StartHostSession(GameModeData mode)
     {
-        _statusLabel.text = isCoop ? "Creating Coop Session..." : "Creating session...";
+        _statusLabel.text = $"Creating {mode.modeName} session...";
         SetButtonsEnabled(false);
 
-        string code = await SessionManager.Instance.CreateRelaySession(2);
+        string code = await SessionManager.Instance.CreateRelaySession(mode.maxPlayers);
         
         if (!string.IsNullOrEmpty(code))
         {
@@ -75,7 +89,7 @@ public class MainMenuController : MonoBehaviour
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.StartNetworkedGame(isCoop);
+                GameManager.Instance.StartNetworkedGame(false);
             }
         }
         else
@@ -114,8 +128,9 @@ public class MainMenuController : MonoBehaviour
     private void SetButtonsEnabled(bool isEnabled)
     {
         _practiceBtn.SetEnabled(isEnabled);
-        _coopBtn.SetEnabled(isEnabled);
-        _createBtn.SetEnabled(isEnabled);
+        _btn1vs1.SetEnabled(isEnabled);
+        _btnTeams.SetEnabled(isEnabled);
+        _btnFFA.SetEnabled(isEnabled);
         _joinBtn.SetEnabled(isEnabled);
         _relayCodeInput.SetEnabled(isEnabled);
     }
