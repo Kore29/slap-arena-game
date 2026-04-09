@@ -53,6 +53,13 @@ public class EnemyAgent : Agent
         sensor.AddObservation(transform.localPosition);
         sensor.AddObservation(_rb.linearVelocity);
 
+        // DINÁMICO: Buscar al oponente más cercano si no tenemos uno o el actual es aliado
+        TeamMember myTeam = GetComponent<TeamMember>();
+        if (targetOpponent == null || (targetOpponent.GetComponent<TeamMember>() != null && targetOpponent.GetComponent<TeamMember>().teamId.Value == myTeam.teamId.Value))
+        {
+            targetOpponent = FindClosestOpponent();
+        }
+
         // Observe opponent's position and distance to them (4 values)
         if (targetOpponent != null)
         {
@@ -64,6 +71,29 @@ public class EnemyAgent : Agent
             sensor.AddObservation(Vector3.zero);
             sensor.AddObservation(0f);
         }
+    }
+
+    private Transform FindClosestOpponent()
+    {
+        TeamMember myTeam = GetComponent<TeamMember>();
+        TeamMember[] allMembers = Object.FindObjectsByType<TeamMember>(FindObjectsInactive.Exclude);
+        
+        Transform closest = null;
+        float minDist = float.MaxValue;
+
+        foreach (var member in allMembers)
+        {
+            if (member.teamId.Value != myTeam.teamId.Value)
+            {
+                float dist = Vector3.Distance(transform.position, member.transform.position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = member.transform;
+                }
+            }
+        }
+        return closest;
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -147,9 +177,8 @@ public class EnemyAgent : Agent
 
 
         // Sincronizar Animator (Task 3.2)
-        if (_animator != null && _animator.runtimeAnimatorController != null)
+        if (_animator != null && _animator.runtimeAnimatorController != null && _rb != null)
         {
-            // Usamos .velocity para máxima compatibilidad (Punto 3.2)
             float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
             _animator.SetFloat("Speed", horizontalSpeed / moveSpeed);
             _animator.SetBool("IsFalling", transform.position.y < -0.5f);
@@ -169,10 +198,18 @@ public class EnemyAgent : Agent
         _timeSinceLastSlap = 0f;
         Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, slapRadius, opponentLayer);
 
+        TeamMember myTeam = GetComponent<TeamMember>();
         bool hitOpponent = false;
         foreach (var hit in hits)
         {
             if (hit.gameObject == gameObject) continue;
+
+            // PROTECCIÓN DE FUEGO AMIGO (Task 3.4)
+            TeamMember targetTeam = hit.GetComponent<TeamMember>();
+            if (myTeam != null && targetTeam != null && myTeam.teamId.Value == targetTeam.teamId.Value)
+            {
+                continue;
+            }
             
             Rigidbody hitRb = hit.GetComponent<Rigidbody>();
             if (hitRb != null)

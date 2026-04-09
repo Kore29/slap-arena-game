@@ -72,6 +72,14 @@ public class PlayerController : NetworkBehaviour
         // Task 1.3: Bloqueo de cursor
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // AUTO-INICIALIZAR HUD (Punto 2.2)
+        GameHUD hud = Object.FindAnyObjectByType<GameHUD>();
+        if (hud != null)
+        {
+            hud.Initialize(this);
+            Debug.Log("<color=green>HUD Initialized by PlayerController</color>");
+        }
     }
 
     private void Update()
@@ -233,10 +241,20 @@ public class PlayerController : NetworkBehaviour
         Collider[] hits = Physics.OverlapSphere(origin, slapRadius, opponentLayer);
         bool hitSuccessful = false;
 
+        TeamMember myTeam = GetComponent<TeamMember>();
+
         foreach (var hit in hits)
         {
             if (hit.gameObject == gameObject) continue;
             
+            // PROTECCIÓN DE FUEGO AMIGO (Task 3.4)
+            TeamMember targetTeam = hit.GetComponent<TeamMember>();
+            if (myTeam != null && targetTeam != null && myTeam.teamId.Value == targetTeam.teamId.Value)
+            {
+                Debug.Log($"<color=cyan>Friend hit ignored: {hit.name}</color>");
+                continue;
+            }
+
             Rigidbody targetRb = hit.GetComponent<Rigidbody>();
             if (targetRb != null)
             {

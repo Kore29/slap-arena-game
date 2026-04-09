@@ -38,20 +38,24 @@ public class MainMenuController : MonoBehaviour
         _statusLabel = root.Q<Label>("status-label");
 
         _practiceBtn.clicked += OnPracticeClicked;
-        _btn1vs1.clicked += () => OnModeSelected(mode1vs1);
-        _btnTeams.clicked += () => OnModeSelected(modeTeams);
-        _btnFFA.clicked += () => OnModeSelected(modeFFA);
+        _btn1vs1.clicked += On1vs1Clicked;
+        _btnTeams.clicked += OnTeamsClicked;
+        _btnFFA.clicked += OnFFAClicked;
         _joinBtn.clicked += OnJoinGameClicked;
     }
 
     private void OnDisable()
     {
         _practiceBtn.clicked -= OnPracticeClicked;
-        _btn1vs1.clicked -= () => OnModeSelected(mode1vs1);
-        _btnTeams.clicked -= () => OnModeSelected(modeTeams);
-        _btnFFA.clicked -= () => OnModeSelected(modeFFA);
+        _btn1vs1.clicked -= On1vs1Clicked;
+        _btnTeams.clicked -= OnTeamsClicked;
+        _btnFFA.clicked -= OnFFAClicked;
         _joinBtn.clicked -= OnJoinGameClicked;
     }
+
+    private void On1vs1Clicked() => OnModeSelected(mode1vs1);
+    private void OnTeamsClicked() => OnModeSelected(modeTeams);
+    private void OnFFAClicked() => OnModeSelected(modeFFA);
 
     private void OnPracticeClicked()
     {

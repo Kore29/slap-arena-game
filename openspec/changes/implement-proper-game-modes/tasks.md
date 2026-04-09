@@ -13,8 +13,8 @@
 ## 3. Bot Management & AI
 - [x] 3.1 Create `BotNameUtility` with a JSON list of 50+ Spanish names.
 - [x] 3.2 Implement Host-side logic for bot filling and player replacement.
-- [ ] 3.3 Update `EnemyAgent` with `TeamID` and target selection logic (closest enemy).
-- [ ] 3.4 Implement friendly fire protection in `PlayerController` and `EnemyAgent`.
+- [x] 3.3 Update `EnemyAgent` with `TeamID` and target selection logic (closest enemy).
+- [x] 3.4 Implement friendly fire protection in `PlayerController` and `EnemyAgent`.
 
 ## 4. Visuals & Environment
 - [ ] 4.1 Implement color-coded name tags (Blue/Red) in the HUD.

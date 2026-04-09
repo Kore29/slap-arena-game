@@ -549,6 +549,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
   uiDocument: {fileID: 1986834757}
+  mode1vs1: {fileID: 11400000, guid: 63ee49ce7dded4453929bd0a21907ae8, type: 2}
+  modeTeams: {fileID: 11400000, guid: 48941f85fcb704a3db7bbbe298268be8, type: 2}
+  modeFFA: {fileID: 11400000, guid: c31ee8513902b447e929974f7d03d3d6, type: 2}
 --- !u!114 &1986834757
 MonoBehaviour:
   m_ObjectHideFlags: 0

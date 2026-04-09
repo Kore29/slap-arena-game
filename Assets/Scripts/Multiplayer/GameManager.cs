@@ -154,16 +154,19 @@ public class GameManager : MonoBehaviour
                 NetworkObject nb = bot.GetComponent<NetworkObject>();
                 nb.Spawn();
                 
-                // Configurar Bot (Nickname, Equipo)
-                // TODO: Sync bot data
+                // Configurar Equipo y Apodo
+                TeamMember team = bot.GetComponent<TeamMember>();
+                if (team != null) team.SetData(slot.TeamId, slot.Nickname);
             }
             else
             {
-                // El player prefab se suele spawnear automáticamente por NGO si está en el NetworkManager, 
-                // pero si queremos control total:
                 GameObject player = Instantiate(playerPrefab, spawnPoint.position, rotation: spawnPoint.rotation);
                 NetworkObject nb = player.GetComponent<NetworkObject>();
                 nb.SpawnAsPlayerObject(slot.ClientId);
+
+                // Configurar Equipo y Apodo
+                TeamMember team = player.GetComponent<TeamMember>();
+                if (team != null) team.SetData(slot.TeamId, slot.Nickname);
             }
         }
     }
