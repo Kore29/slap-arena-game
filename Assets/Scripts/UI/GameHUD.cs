@@ -15,10 +15,35 @@ public class GameHUD : MonoBehaviour
     {
         _uiDocument = GetComponent<UIDocument>();
         
-        // Empezar oculto usando estilos (Punto 3.2)
         if (_uiDocument.rootVisualElement != null)
         {
             _uiDocument.rootVisualElement.style.display = DisplayStyle.None;
+        }
+    }
+
+    private void Start()
+    {
+        // Failsafe: Si en 1 segundo no nos han inicializado, intentamos buscarnos nosotros
+        InvokeRepeating(nameof(TryAutoInitialize), 1f, 1f);
+    }
+
+    private void TryAutoInitialize()
+    {
+        if (_localPlayer != null) 
+        {
+            CancelInvoke(nameof(TryAutoInitialize));
+            return;
+        }
+
+        PlayerController[] players = Object.FindObjectsByType<PlayerController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (var p in players)
+        {
+            if (p.IsOwner)
+            {
+                Initialize(p);
+                Debug.Log("<color=cyan>[GameHUD] Auto-Initialized Failsafe success!</color>");
+                break;
+            }
         }
     }
 

@@ -1,8 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
@@ -22,6 +23,9 @@ public class GameManager : MonoBehaviour
     
     [Header("UI")]
     public GameHUD gameplayHUD;
+
+    [Header("Environment")]
+    public Transform arenaTransform;
 
     private void Awake()
     {
@@ -101,22 +105,58 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void StartNetworkedGame(bool isCoop)
+    /// <summary>
+    /// Prepara la sesión de red (Lobby) sin cargar todavía la arena.
+    /// </summary>
+    public void InitializeNetworkedSession(bool isCoop)
     {
+        if (currentModeData == null)
+        {
+            Debug.LogError("<color=red>🛑 CANNOT INITIALIZE: currentModeData is NULL in GameManager!</color>");
+            return;
+        }
+
         currentState = GameState.Lobby;
         
         if (NetworkManager.Singleton.IsHost)
         {
             SessionManager.Instance.InitializeLobby(currentModeData);
         }
+        
+        Debug.Log("<color=cyan>🎮 Session Initialized. Waiting in Lobby...</color>");
+    }
+
+    /// <summary>
+    /// Carga la escena de la arena para todos los clientes. Solo ejecutable por el Server/Host.
+    /// </summary>
+    public void StartMatch()
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
 
         // Suscribirse a la carga de la escena de juego
         SceneManager.sceneLoaded -= OnNetworkedSceneLoaded;
         SceneManager.sceneLoaded += OnNetworkedSceneLoaded;
 
-        // Cargar escena para todos (via NetworkManager si estamos en sesión, pero aquí es inicio local antes del cambio)
-        // Usaremos el NetworkSceneManager una vez estemos bien conectados
-        SceneManager.LoadScene("PlatformArena");
+        NetworkManager.Singleton.SceneManager.LoadScene("PlatformArena", LoadSceneMode.Single);
+        Debug.Log("<color=green>🌐 NetworkSceneManager: Loading PlatformArena for everyone.</color>");
+    }
+
+    [ClientRpc]
+    private void SyncGameStateClientRpc(GameState newState)
+    {
+        currentState = newState;
+        Debug.Log($"[GameManager] State synced to: {newState}");
+
+        if (newState == GameState.Playing)
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+            UnityEngine.Cursor.visible = false;
+        }
+        else
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+            UnityEngine.Cursor.visible = true;
+        }
     }
 
     private void OnNetworkedSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -126,6 +166,8 @@ public class GameManager : MonoBehaviour
             SceneManager.sceneLoaded -= OnNetworkedSceneLoaded;
             if (NetworkManager.Singleton.IsServer)
             {
+                currentState = GameState.Playing;
+                SyncGameStateClientRpc(GameState.Playing);
                 ExecuteNetworkedSpawning();
             }
         }
@@ -133,8 +175,22 @@ public class GameManager : MonoBehaviour
 
     private void ExecuteNetworkedSpawning()
     {
+        if (currentModeData == null)
+        {
+            Debug.LogError("<color=red>🛑 CRITICAL: currentModeData is NULL in GameManager during spawning!</color>");
+            return;
+        }
+
         Debug.Log("<color=cyan>🌐 Iniciando Spawning de Red...</color>");
         
+        // --- ESCALADO DINÁMICO ---
+        if (arenaTransform == null) arenaTransform = GameObject.Find("Arena")?.transform;
+        if (arenaTransform != null && currentModeData != null)
+        {
+            arenaTransform.localScale = Vector3.one * currentModeData.arenaScale;
+            Debug.Log($"<color=orange>Arena scaled to: {currentModeData.arenaScale}</color>");
+        }
+            
         // Buscar todos los puntos de spawn
         GameObject[] teamASpawns = GameObject.FindGameObjectsWithTag("SpawnPointA");
         GameObject[] teamBSpans = GameObject.FindGameObjectsWithTag("SpawnPointB");
@@ -168,6 +224,58 @@ public class GameManager : MonoBehaviour
                 TeamMember team = player.GetComponent<TeamMember>();
                 if (team != null) team.SetData(slot.TeamId, slot.Nickname);
             }
+        }
+    }
+
+    public void OnPlayerEliminated(TeamMember player)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        Debug.Log($"<color=orange>Player eliminated: {player.nickname.Value}</color>");
+        
+        // Comprobar si queda un ganador
+        CheckMatchResults();
+    }
+
+    private void CheckMatchResults()
+    {
+        TeamMember[] activePlayers = Object.FindObjectsByType<TeamMember>(FindObjectsInactive.Exclude);
+        
+        if (currentModeData.isTeamBased)
+        {
+            HashSet<int> teamsLeft = new HashSet<int>();
+            foreach (var p in activePlayers) teamsLeft.Add(p.teamId.Value);
+
+            if (teamsLeft.Count <= 1)
+            {
+                int winnerTeam = teamsLeft.Count == 1 ? new List<int>(teamsLeft)[0] : -1;
+                string winnerName = winnerTeam == 0 ? "TEAM ALPHA" : "TEAM BETA";
+                if (winnerTeam == -1) winnerName = "DRAW";
+                
+                ShowMatchResultsClientRpc(winnerName, winnerTeam);
+            }
+        }
+        else 
+        {
+            if (activePlayers.Length <= 1)
+            {
+                string winnerName = activePlayers.Length == 1 ? activePlayers[0].nickname.Value.ToString() : "DRAW";
+                ShowMatchResultsClientRpc(winnerName, activePlayers.Length == 1 ? activePlayers[0].teamId.Value : -1);
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void ShowMatchResultsClientRpc(string winnerName, int winnerTeam)
+    {
+        SyncGameStateClientRpc(GameState.Results);
+        Debug.Log($"<color=gold>🏆 MATCH OVER! Winner: {winnerName}</color>");
+        
+        // Aquí activaremos la UI de resultados (Tarea 4.3)
+        MatchResultsController resultsUI = Object.FindAnyObjectByType<MatchResultsController>();
+        if (resultsUI != null)
+        {
+            resultsUI.ShowResults(winnerName, winnerTeam);
         }
     }
 }

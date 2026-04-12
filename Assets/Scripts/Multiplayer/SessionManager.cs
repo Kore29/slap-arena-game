@@ -126,7 +126,7 @@ public class SessionManager : NetworkBehaviour
             if (lobbySlots[i].ClientId == clientId && !lobbySlots[i].IsBot)
             {
                 // Si la lógica de bots está activa, lo reemplazamos por un bot
-                if (GameManager.Instance.currentModeData.fillWithBots)
+                if (GameManager.Instance.currentModeData != null && GameManager.Instance.currentModeData.fillWithBots)
                 {
                     var slot = lobbySlots[i];
                     slot.IsBot = true;
@@ -139,6 +139,53 @@ public class SessionManager : NetworkBehaviour
                     lobbySlots.RemoveAt(i);
                 }
                 break;
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RemoveBotsServerRpc()
+    {
+        if (!IsServer) return;
+
+        for (int i = lobbySlots.Count - 1; i >= 0; i--)
+        {
+            if (lobbySlots[i].IsBot)
+            {
+                lobbySlots.RemoveAt(i);
+            }
+        }
+        Debug.Log("[SessionManager] All bots removed by Host.");
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ChangeTeamServerRpc(ulong clientId, int newTeam)
+    {
+        for (int i = 0; i < lobbySlots.Count; i++)
+        {
+            if (lobbySlots[i].ClientId == clientId)
+            {
+                var slot = lobbySlots[i];
+                slot.TeamId = newTeam;
+                lobbySlots[i] = slot;
+                Debug.Log($"[SessionManager] Client {clientId} changed to team {newTeam}");
+                return;
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ToggleReadyServerRpc(ulong clientId)
+    {
+        for (int i = 0; i < lobbySlots.Count; i++)
+        {
+            if (lobbySlots[i].ClientId == clientId)
+            {
+                var slot = lobbySlots[i];
+                slot.IsReady = !slot.IsReady;
+                lobbySlots[i] = slot;
+                Debug.Log($"[SessionManager] Client {clientId} toggled ready: {slot.IsReady}");
+                return;
             }
         }
     }

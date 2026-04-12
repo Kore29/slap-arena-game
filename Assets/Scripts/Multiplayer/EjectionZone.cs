@@ -15,6 +15,12 @@ public class EjectionZone : MonoBehaviour
             var netObj = other.GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
             {
+                TeamMember team = other.GetComponent<TeamMember>();
+                if (team != null)
+                {
+                    GameManager.Instance.OnPlayerEliminated(team);
+                }
+
                 Debug.Log($"Network Entity {netObj.OwnerClientId} fell out of bounds!");
                 netObj.Despawn(true);
             }

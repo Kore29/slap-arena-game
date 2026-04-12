@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:vie="UnityEngine.UIElements.Experimental">
+    <ui:VisualElement name="lobby-screen" style="flex-grow: 1; align-items: center; justify-content: center; background-color: rgba(10, 10, 10, 0.98); width: 100%; height: 100%;">
+        <ui:VisualElement style="width: 80%; max-width: 900px; height: 80%; padding: 40px; background-color: rgba(30, 30, 30, 0.6); border-radius: 24px; border-width: 1px; border-color: rgba(255, 255, 255, 0.1); flex-direction: column; border-top-width: 4px; border-top-color: #00d1ff;">
+            
+            <!-- Header -->
+            <ui:VisualElement style="align-items: center; margin-bottom: 25px;">
+                <ui:Label name="lobby-title" text="WAR ROOM" style="font-size: 38px; color: white; -unity-font-style: bold; letter-spacing: 8px; margin-bottom: 5px;" />
+                <ui:VisualElement style="background-color: rgba(0, 0, 0, 0.3); padding: 8px 25px; border-radius: 12px; border-width: 1px; border-color: rgba(0, 209, 255, 0.3);">
+                    <ui:Label name="room-code-label" text="JOIN CODE: ---" style="color: #00d1ff; -unity-font-style: bold; font-size: 18px; letter-spacing: 2px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Play Area -->
+            <ui:VisualElement style="flex-grow: 1; margin-bottom: 30px;">
+                
+                <!-- Teams Parent -->
+                <ui:VisualElement name="teams-container" style="flex-direction: row; height: 100%;">
+                    <!-- Team A -->
+                    <ui:VisualElement name="team-a" style="flex-grow: 1; margin-right: 15px; background-color: rgba(255, 62, 62, 0.08); border-radius: 16px; padding: 20px; border-width: 1px; border-color: rgba(255, 62, 62, 0.2);">
+                        <ui:Label text="TEAM ALPHA" style="color: #ff3e3e; -unity-font-style: bold; font-size: 16px; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 15px;" />
+                        <ui:ScrollView name="team-a-list" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                    
+                    <!-- Team B -->
+                    <ui:VisualElement name="team-b" style="flex-grow: 1; margin-left: 15px; background-color: rgba(0, 132, 255, 0.08); border-radius: 16px; padding: 20px; border-width: 1px; border-color: rgba(0, 132, 255, 0.2);">
+                        <ui:Label text="TEAM BETA" style="color: #0084ff; -unity-font-style: bold; font-size: 16px; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 15px;" />
+                        <ui:ScrollView name="team-b-list" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- FFA Parent -->
+                <ui:VisualElement name="ffa-container" style="display: none; height: 100%; background-color: rgba(255, 255, 255, 0.03); border-radius: 16px; padding: 20px; border-width: 1px; border-color: rgba(255, 255, 255, 0.05);">
+                    <ui:Label text="CONTENDERS" style="color: #00d1ff; -unity-font-style: bold; font-size: 16px; border-bottom-width: 1px; border-color: rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 15px;" />
+                    <ui:ScrollView name="ffa-list" style="flex-grow: 1;" />
+                </ui:VisualElement>
+
+            </ui:VisualElement>
+
+            <!-- Bottom Bar -->
+            <ui:VisualElement style="flex-direction: row; justify-content: space-between; background-color: rgba(0, 0, 0, 0.4); padding: 18px; border-radius: 16px; border-width: 1px; border-color: rgba(255, 255, 255, 0.05);">
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="leave-btn" text="QUIT" style="background-color: #ff4747; color: white; border-radius: 10px; padding: 12px 25px; border-width: 0; margin-right: 15px; -unity-font-style: bold; font-size: 15px;" />
+                    <ui:Button name="switch-global-btn" text="SWITCH TEAM" style="background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 10px; padding: 12px 25px; border-width: 0; font-size: 15px;" />
+                </ui:VisualElement>
+                
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="remove-bots-btn" text="PURGE BOTS" style="background-color: #d32f2f; color: white; border-radius: 10px; padding: 12px 25px; border-width: 0; margin-right: 15px; display: none; font-size: 15px;" />
+                    <ui:Button name="start-btn" text="ENGAGE" style="background-color: #00c853; color: white; border-radius: 10px; padding: 12px 55px; border-width: 0; -unity-font-style: bold; font-size: 18px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

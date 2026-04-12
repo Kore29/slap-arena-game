@@ -11,6 +11,9 @@ public class GameModeData : ScriptableObject
     public enum VictoryCondition { LastManStanding, LastTeamStanding, Points }
     public VictoryCondition victoryCondition = VictoryCondition.LastManStanding;
 
+    [Header("Environment Settings")]
+    public float arenaScale = 1.0f;
+
     [Header("Bot Settings")]
     public bool fillWithBots = true;
     public int minBots = 1;

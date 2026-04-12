@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3139947343690400091}
   - component: {fileID: 2301175098041405536}
   - component: {fileID: 950877529990490423}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: '[GENERATOR]'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1698744138
+  GlobalObjectIdHash: 1786151577
   InScenePlacedSourceGlobalObjectIdHash: 1601527030
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -81,16 +81,20 @@ MonoBehaviour:
   - {fileID: 3356751432538110193, guid: ffbddc4ef9676cc419e81e06aaa836d8, type: 3}
   syncedSeed:
     m_InternalValue: 0
+  syncedScale:
+    m_InternalValue: 1
   minTrees: 1
   maxTrees: 2
   minRocks: 2
   maxRocks: 4
   grassDensity: 50
+  globalScaleMultiplier: 2
   spawnRadius: 15
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
   exclusionRadius: 3
   exclusionPoints:
+  - {fileID: 0}
   - {fileID: 0}
   currentSeed: 0

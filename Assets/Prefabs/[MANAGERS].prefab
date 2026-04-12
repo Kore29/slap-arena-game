@@ -113,6 +113,7 @@ MonoBehaviour:
   aiAgentPrefab: {fileID: 6746595564172737140, guid: 5a2270bcffbd24a25b4afbdc3825b2df, type: 3}
   playerSpawnPoint: {fileID: 0}
   enemySpawnPoint: {fileID: 0}
-  currentModeData: {fileID: 0}
+  currentModeData: {fileID: 11400000, guid: c31ee8513902b447e929974f7d03d3d6, type: 2}
   currentState: 0
   gameplayHUD: {fileID: 0}
+  arenaTransform: {fileID: 0}

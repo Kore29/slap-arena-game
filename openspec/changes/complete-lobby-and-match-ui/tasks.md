@@ -1,0 +1,22 @@
+# Tasks: Complete Lobby and Match UI
+
+- [ ] 1. Core Networking Sync
+    - [ ] 1.1 Add `ChangeTeamServerRpc` to `SessionManager.cs`
+    - [ ] 1.2 Implement logic to refresh `LobbySlot` data upon team change
+    - [ ] 1.3 Split `GameManager.StartNetworkedGame` into Initial Setup vs Scene Loading
+- [ ] 2. Lobby UI
+    - [ ] 2.1 Create `LobbyItem.uxml` (Slot template)
+    - [ ] 2.2 Create `Lobby.uxml` (Main structure)
+    - [ ] 2.3 Implement `LobbyController.cs` and connect it to `SessionManager` events
+- [ ] 3. Navigation Flow
+    - [ ] 3.1 Update `MainMenuController.cs` to show Lobby UI after Host/Join
+    - [ ] 3.2 Implement "Start Match" button logic for the Host
+    - [ ] 3.3 Implement "Leave Lobby" logic (Disconnect/Shutdown)
+- [ ] 4. End Match UI
+    - [ ] 4.1 Update `GameManager` to detect end-of-match conditions
+    - [ ] 4.2 Create `MatchResults.uxml` overlay
+    - [ ] 4.3 Implement `MatchResultsController` to show winner name
+- [ ] 5. Verification
+    - [ ] 5.1 Test team switching sync between Host and Client
+    - [ ] 5.2 Verify bot name/team visualization in Lobby
+    - [ ] 5.3 Confirm successful transition to Arena and back

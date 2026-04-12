@@ -10,6 +10,9 @@ public class MainMenuController : MonoBehaviour
     public GameModeData modeTeams;
     public GameModeData modeFFA;
 
+    [Header("Lobby Settings")]
+    public GameObject lobbyUIParent;
+
     private Button _practiceBtn;
     private Button _btn1vs1;
     private Button _btnTeams;
@@ -42,15 +45,18 @@ public class MainMenuController : MonoBehaviour
         _btnTeams.clicked += OnTeamsClicked;
         _btnFFA.clicked += OnFFAClicked;
         _joinBtn.clicked += OnJoinGameClicked;
+
+        // Asegurarse de que el lobby esté oculto al inicio
+        if (lobbyUIParent != null) lobbyUIParent.SetActive(false);
     }
 
     private void OnDisable()
     {
-        _practiceBtn.clicked -= OnPracticeClicked;
-        _btn1vs1.clicked -= On1vs1Clicked;
-        _btnTeams.clicked -= OnTeamsClicked;
-        _btnFFA.clicked -= OnFFAClicked;
-        _joinBtn.clicked -= OnJoinGameClicked;
+        if (_practiceBtn != null) _practiceBtn.clicked -= OnPracticeClicked;
+        if (_btn1vs1 != null) _btn1vs1.clicked -= On1vs1Clicked;
+        if (_btnTeams != null) _btnTeams.clicked -= OnTeamsClicked;
+        if (_btnFFA != null) _btnFFA.clicked -= OnFFAClicked;
+        if (_joinBtn != null) _joinBtn.clicked -= OnJoinGameClicked;
     }
 
     private void On1vs1Clicked() => OnModeSelected(mode1vs1);
@@ -88,12 +94,12 @@ public class MainMenuController : MonoBehaviour
         
         if (!string.IsNullOrEmpty(code))
         {
-            _container.style.display = DisplayStyle.None;
             _statusLabel.text = $"Room Code: {code}";
+            ShowLobbyUI(code);
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.StartNetworkedGame(false);
+                GameManager.Instance.InitializeNetworkedSession(false);
             }
         }
         else
@@ -120,12 +126,24 @@ public class MainMenuController : MonoBehaviour
         if (success)
         {
             _statusLabel.text = "Connected!";
-            _container.style.display = DisplayStyle.None;
+            ShowLobbyUI(code);
         }
         else
         {
             _statusLabel.text = "Failed to join session. Check code.";
             SetButtonsEnabled(true);
+        }
+    }
+
+    private void ShowLobbyUI(string code)
+    {
+        _container.style.display = DisplayStyle.None;
+        if (lobbyUIParent != null)
+        {
+            lobbyUIParent.SetActive(true);
+            var lobby = lobbyUIParent.GetComponent<LobbyController>();
+            if (lobby == null) lobby = lobbyUIParent.GetComponentInChildren<LobbyController>();
+            if (lobby != null) lobby.SetRoomCode(code);
         }
     }
 

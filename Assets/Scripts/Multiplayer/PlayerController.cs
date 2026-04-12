@@ -69,9 +69,19 @@ public class PlayerController : NetworkBehaviour
 
     private void SetupLocalPlayer()
     {
-        // Task 1.3: Bloqueo de cursor
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // Solo bloquear el cursor si estamos jugando (Tarea 1.3)
+        if (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Playing)
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+            UnityEngine.Cursor.visible = false;
+            Debug.Log("Cursor locked for gameplay.");
+        }
+        else
+        {
+            UnityEngine.Cursor.lockState = CursorLockMode.None;
+            UnityEngine.Cursor.visible = true;
+            Debug.Log("Cursor unlocked for UI/Lobby.");
+        }
 
         // AUTO-INICIALIZAR HUD (Punto 2.2)
         GameHUD hud = Object.FindAnyObjectByType<GameHUD>();
