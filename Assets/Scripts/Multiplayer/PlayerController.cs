@@ -130,33 +130,10 @@ public class PlayerController : NetworkBehaviour
 
         // Se ha movido a FixedUpdate para evitar conflictos de teletransporte (Punto 2.2)
     }
-
-    private void Respawn()
-    {
-        Debug.Log($"<color=cyan>🔁 Jugador Respawneando desde {transform.position} | Frame: {Time.frameCount}</color>");
-        _rb.linearVelocity = Vector3.zero;
-        _rb.angularVelocity = Vector3.zero;
-        
-        if (GameManager.Instance != null && GameManager.Instance.playerSpawnPoint != null)
-        {
-            transform.position = GameManager.Instance.playerSpawnPoint.position;
-        }
-        else
-        {
-            transform.position = new Vector3(0, 2f, 0); // Failsafe
-        }
-    }
-
     private void FixedUpdate()
     {
         bool hasControl = !IsNetworkActive || IsOwner;
         if (!hasControl) return;
-
-        // AUTO-RESPAWN: Ahora en FixedUpdate para mayor precisión física (Punto 2.2)
-        if (transform.position.y < -10.0f)
-        {
-            Respawn();
-        }
 
         // Enviar velocidad al Animator (Task 3.1)
         if (_animator != null && _animator.runtimeAnimatorController != null)

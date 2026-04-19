@@ -50,18 +50,24 @@ public class GameHUD : MonoBehaviour
     public void Initialize(PlayerController player)
     {
         _localPlayer = player;
-        
-        // Acceder a los elementos ahora que sabemos que el HUD debe mostrarse
-        var root = _uiDocument.rootVisualElement;
-        root.style.display = DisplayStyle.Flex; // Mostrar HUD
+        SetVisibility(true);
 
+        var root = _uiDocument.rootVisualElement;
         _cooldownFill = root.Q<VisualElement>("cooldown-bar-fill");
         _hitLog = root.Q<Label>("hit-log-label");
 
-        // Suscribirse al evento de hit (Punto 2.2)
         if (_localPlayer != null)
         {
             _localPlayer.OnSlapHit += ShowHitFeedback;
+        }
+    }
+
+    public void SetVisibility(bool visible)
+    {
+        if (_uiDocument == null) _uiDocument = GetComponent<UIDocument>();
+        if (_uiDocument != null && _uiDocument.rootVisualElement != null)
+        {
+            _uiDocument.rootVisualElement.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 

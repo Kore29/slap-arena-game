@@ -56,6 +56,7 @@ public class MatchResultsController : MonoBehaviour
         if (_winnerLabel != null) _winnerLabel.text = winnerName;
 
         UpdateStatusText(winnerTeam, winnerClientId);
+        HideGameplayHUD();
 
         if (_backBtn != null)
         {
@@ -79,6 +80,7 @@ public class MatchResultsController : MonoBehaviour
         }
         
         if (_winnerLabel != null) _winnerLabel.text = "YOU FELL OUT";
+        HideGameplayHUD();
         
         if (_backBtn != null)
         {
@@ -129,6 +131,12 @@ public class MatchResultsController : MonoBehaviour
                 _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(0.5f, 0f, 0f, 0.5f));
             }
         }
+    }
+
+    private void HideGameplayHUD()
+    {
+        GameHUD hud = Object.FindAnyObjectByType<GameHUD>();
+        if (hud != null) hud.SetVisibility(false);
     }
 
     private void OnBackClicked()

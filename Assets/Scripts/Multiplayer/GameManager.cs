@@ -170,16 +170,25 @@ public class GameManager : NetworkBehaviour
     public void OnPlayerEliminated(TeamMember player)
     {
         if (!NetworkManager.Singleton.IsServer) return;
+        if (currentState == GameState.Results) return; // Ya terminó
 
         Debug.Log($"<color=orange>Player eliminated: {player.nickname.Value}</color>");
         
-        // Comprobar si queda un ganador
-        CheckMatchResults();
+        // Comprobar si queda un ganador ignorando al que acaba de caer
+        CheckMatchResults(player);
     }
 
-    private void CheckMatchResults()
+    private void CheckMatchResults(TeamMember excludeMember = null)
     {
-        TeamMember[] activePlayers = Object.FindObjectsByType<TeamMember>(FindObjectsInactive.Exclude);
+        TeamMember[] allPlayers = Object.FindObjectsByType<TeamMember>(FindObjectsInactive.Exclude);
+        List<TeamMember> activePlayersList = new List<TeamMember>();
+        
+        foreach (var p in allPlayers)
+        {
+            if (p != excludeMember) activePlayersList.Add(p);
+        }
+
+        TeamMember[] activePlayers = activePlayersList.ToArray();
         
         if (currentModeData.isTeamBased)
         {

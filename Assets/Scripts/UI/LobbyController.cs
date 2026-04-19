@@ -39,8 +39,29 @@ public class LobbyController : MonoBehaviour
 
     private void InitializeUI()
     {
+        Debug.Log("<color=cyan>[LobbyUI] Initializing UI...</color>");
         if (lobbyUIDoc == null) lobbyUIDoc = GetComponent<UIDocument>();
         var root = lobbyUIDoc.rootVisualElement;
+
+        if (root == null)
+        {
+            Debug.LogError("<color=red>[LobbyUI] rootVisualElement is NULL!</color>");
+            return;
+        }
+
+        VisualElement screen = root.Q<VisualElement>("lobby-screen");
+        if (screen != null)
+        {
+            Debug.Log("<color=green>[LobbyUI] lobby-screen found.</color>");
+            // Forzar visibilidad básica
+            screen.style.display = DisplayStyle.Flex;
+            screen.style.opacity = 1f;
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyUI] lobby-screen NOT FOUND in UXML!");
+        }
+
 
         _teamsParent = root.Q<VisualElement>("teams-container");
         _ffaParent = root.Q<VisualElement>("ffa-container");
