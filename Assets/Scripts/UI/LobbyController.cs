@@ -39,7 +39,7 @@ public class LobbyController : MonoBehaviour
 
     private void InitializeUI()
     {
-        Debug.Log("<color=cyan>[LobbyUI] Initializing UI...</color>");
+        Debug.Log("<color=cyan>[LobbyUI] Initializing UI Full-Force Mode...</color>");
         if (lobbyUIDoc == null) lobbyUIDoc = GetComponent<UIDocument>();
         var root = lobbyUIDoc.rootVisualElement;
 
@@ -49,13 +49,29 @@ public class LobbyController : MonoBehaviour
             return;
         }
 
+        // --- FUERZA BRUTA PARA PANTALLA COMPLETA ---
+        // Forzamos al ROOT real a crecer y ocupar todo
+        root.style.flexGrow = 1;
+
         VisualElement screen = root.Q<VisualElement>("lobby-screen");
         if (screen != null)
         {
-            Debug.Log("<color=green>[LobbyUI] lobby-screen found.</color>");
-            // Forzar visibilidad básica
-            screen.style.display = DisplayStyle.Flex;
-            screen.style.opacity = 1f;
+            Debug.Log("<color=green>[LobbyUI] lobby-screen linked and stretching...</color>");
+            
+            // Forzamos al elemento del UXML a ser absoluto y estirarse al 100%
+            screen.style.position = Position.Absolute;
+            screen.style.top = 0;
+            screen.style.left = 0;
+            screen.style.right = 0;
+            screen.style.bottom = 0;
+            screen.style.flexGrow = 1;
+            screen.style.width = new Length(100, LengthUnit.Percent);
+            screen.style.height = new Length(100, LengthUnit.Percent);
+
+            // Diagnóstico de dimensiones en tiempo real
+            screen.RegisterCallback<GeometryChangedEvent>(evt => {
+                Debug.Log($"[LobbyUI] Geometry changed: {evt.newRect.width}x{evt.newRect.height}");
+            });
         }
         else
         {
