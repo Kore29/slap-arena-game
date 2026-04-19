@@ -9,9 +9,6 @@
                 <ui:Label text="SLAP ARENA ML" class="title" />
                 
                 <ui:VisualElement class="menu-box panel-glass">
-                    <ui:Button name="practice-btn" text="PRACTICE (OFFLINE)" class="btn-premium practice-btn" />
-                    
-                    <ui:VisualElement class="divider" />
                     <ui:Label text="CREATE MATCH" class="subtitle-hero" style="margin-top: 0; margin-bottom: 20px; font-size: 14px; -unity-text-align: middle-center;" />
                     
                     <ui:Button name="btn-1vs1" text="1 VS 1 DUEL" class="btn-premium primary-btn" />

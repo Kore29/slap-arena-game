@@ -13,7 +13,6 @@ public class MainMenuController : MonoBehaviour
     [Header("Lobby Settings")]
     public GameObject lobbyUIParent;
 
-    private Button _practiceBtn;
     private Button _btn1vs1;
     private Button _btnTeams;
     private Button _btnFFA;
@@ -30,7 +29,6 @@ public class MainMenuController : MonoBehaviour
         var root = uiDocument.rootVisualElement;
         
         _container = root.Q<VisualElement>(className: "container");
-        _practiceBtn = root.Q<Button>("practice-btn");
         
         _btn1vs1 = root.Q<Button>("btn-1vs1");
         _btnTeams = root.Q<Button>("btn-teams");
@@ -40,7 +38,6 @@ public class MainMenuController : MonoBehaviour
         _relayCodeInput = root.Q<TextField>("relay-code-input");
         _statusLabel = root.Q<Label>("status-label");
 
-        _practiceBtn.clicked += OnPracticeClicked;
         _btn1vs1.clicked += On1vs1Clicked;
         _btnTeams.clicked += OnTeamsClicked;
         _btnFFA.clicked += OnFFAClicked;
@@ -52,7 +49,6 @@ public class MainMenuController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_practiceBtn != null) _practiceBtn.clicked -= OnPracticeClicked;
         if (_btn1vs1 != null) _btn1vs1.clicked -= On1vs1Clicked;
         if (_btnTeams != null) _btnTeams.clicked -= OnTeamsClicked;
         if (_btnFFA != null) _btnFFA.clicked -= OnFFAClicked;
@@ -62,16 +58,6 @@ public class MainMenuController : MonoBehaviour
     private void On1vs1Clicked() => OnModeSelected(mode1vs1);
     private void OnTeamsClicked() => OnModeSelected(modeTeams);
     private void OnFFAClicked() => OnModeSelected(modeFFA);
-
-    private void OnPracticeClicked()
-    {
-        _container.style.display = DisplayStyle.None;
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.StartLocalGame();
-        }
-        gameObject.SetActive(false);
-    }
 
     private void OnModeSelected(GameModeData mode)
     {
@@ -149,7 +135,6 @@ public class MainMenuController : MonoBehaviour
 
     private void SetButtonsEnabled(bool isEnabled)
     {
-        _practiceBtn.SetEnabled(isEnabled);
         _btn1vs1.SetEnabled(isEnabled);
         _btnTeams.SetEnabled(isEnabled);
         _btnFFA.SetEnabled(isEnabled);

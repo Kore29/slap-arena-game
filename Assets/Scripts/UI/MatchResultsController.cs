@@ -11,27 +11,92 @@ public class MatchResultsController : MonoBehaviour
     private Label _winnerLabel;
     private Button _backBtn;
 
+    private bool _isInitialized = false;
+
     private void OnEnable()
     {
+        InitializeUI();
+    }
+
+    private void InitializeUI()
+    {
+        if (_isInitialized) return;
+
         if (resultsUIDoc == null) resultsUIDoc = GetComponent<UIDocument>();
+        if (resultsUIDoc == null) return;
+
         var root = resultsUIDoc.rootVisualElement;
+        if (root == null) return;
 
         _overlay = root.Q<VisualElement>("results-overlay");
         _titleLabel = root.Q<Label>("result-title");
         _winnerLabel = root.Q<Label>("winner-name");
         _backBtn = root.Q<Button>("back-to-lobby-btn");
 
-        _backBtn.clicked += OnBackClicked;
-        _overlay.style.display = DisplayStyle.None;
+        if (_backBtn != null)
+        {
+            _backBtn.clicked -= OnBackClicked; // Seguridad contra dobles registros
+            _backBtn.clicked += OnBackClicked;
+        }
+
+        if (_overlay != null)
+        {
+            _overlay.style.display = DisplayStyle.None;
+            _isInitialized = true;
+        }
     }
 
     public void ShowResults(string winnerName, int winnerTeam, ulong winnerClientId)
     {
-        _overlay.style.display = DisplayStyle.Flex;
-        _winnerLabel.text = winnerName;
+        InitializeUI();
+        if (!_isInitialized) return;
 
-        // Sincronizar victoria/derrota
-        TeamMember localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject?.GetComponent<TeamMember>();
+        _overlay.style.display = DisplayStyle.None; // Reset visual
+        _overlay.style.display = DisplayStyle.Flex;
+        if (_winnerLabel != null) _winnerLabel.text = winnerName;
+
+        UpdateStatusText(winnerTeam, winnerClientId);
+
+        if (_backBtn != null)
+        {
+            _backBtn.SetEnabled(NetworkManager.Singleton.IsServer);
+            if (!NetworkManager.Singleton.IsServer) _backBtn.text = "WAITING FOR HOST...";
+        }
+    }
+
+    public void ShowEliminatedEarly()
+    {
+        InitializeUI();
+        if (!_isInitialized || _overlay == null) return;
+        if (_overlay.style.display == DisplayStyle.Flex) return;
+
+        _overlay.style.display = DisplayStyle.Flex;
+        
+        if (_titleLabel != null)
+        {
+            _titleLabel.text = "DEFEAT";
+            _titleLabel.style.color = new StyleColor(new Color(1f, 0.2f, 0.2f));
+        }
+        
+        if (_winnerLabel != null) _winnerLabel.text = "YOU FELL OUT";
+        
+        if (_backBtn != null)
+        {
+            _backBtn.SetEnabled(true);
+            _backBtn.text = "EXIT TO MENU";
+        }
+    }
+
+    private void UpdateStatusText(int winnerTeam, ulong winnerClientId)
+    {
+        if (!_isInitialized || _titleLabel == null) return;
+
+        TeamMember localPlayer = null;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null)
+        {
+            localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject?.GetComponent<TeamMember>();
+        }
+
         bool isTeamMode = GameManager.Instance != null && GameManager.Instance.isTeamMode.Value;
         bool didIWin = false;
 
@@ -43,7 +108,6 @@ public class MatchResultsController : MonoBehaviour
             }
             else
             {
-                // En FFA, la victoria es por ClientId individual
                 didIWin = (NetworkManager.Singleton.LocalClientId == winnerClientId);
             }
         }
@@ -55,31 +119,28 @@ public class MatchResultsController : MonoBehaviour
             _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(1f, 0.5f, 0f, 0.5f));
             _titleLabel.style.unityTextOutlineWidth = 2f;
         }
-        else if (winnerTeam == -1 && winnerClientId == 999)
-        {
-            _titleLabel.text = "DRAW";
-            _titleLabel.style.color = Color.white;
-            _titleLabel.style.unityTextOutlineWidth = 0;
-        }
         else
         {
-            _titleLabel.text = "DEFEAT";
-            _titleLabel.style.color = new StyleColor(new Color(1f, 0.2f, 0.2f)); // Red
-            _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(0.5f, 0f, 0f, 0.5f));
-            _titleLabel.style.unityTextOutlineWidth = 2f;
+            bool isDraw = (winnerTeam == -1 && winnerClientId == 999);
+            _titleLabel.text = isDraw ? "DRAW" : "DEFEAT";
+            _titleLabel.style.color = isDraw ? Color.white : new StyleColor(new Color(1f, 0.2f, 0.2f));
+            _titleLabel.style.unityTextOutlineWidth = isDraw ? 0 : 2f;
+            if (!isDraw) {
+                _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(0.5f, 0f, 0f, 0.5f));
+            }
         }
-
-        // Solo el Host puede ver el botón de volver (o todos, pero el host controla el cambio de escena)
-        _backBtn.SetEnabled(NetworkManager.Singleton.IsServer);
-        if (!NetworkManager.Singleton.IsServer) _backBtn.text = "WAITING FOR HOST...";
     }
 
     private void OnBackClicked()
     {
-        if (NetworkManager.Singleton.IsServer)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            // Volver al menú principal sincronizadamente
             NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        }
+        else
+        {
+            // Fallback para salir rápido si eres cliente y el host no responde
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
     }
 }

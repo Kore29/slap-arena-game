@@ -11,10 +11,6 @@ public class GameManager : NetworkBehaviour
     public GameObject playerPrefab;
     public GameObject aiAgentPrefab;
 
-    [Header("Spawn Points (Old)")]
-    public Transform playerSpawnPoint;
-    public Transform enemySpawnPoint;
-
     [Header("Game Mode Configuration")]
     public GameModeData currentModeData;
     public NetworkVariable<bool> isTeamMode = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -45,66 +41,6 @@ public class GameManager : NetworkBehaviour
         Debug.Log("<color=green>✔ GameManager Oficial Inicializado y Persistente.</color>");
     }
 
-    public void StartLocalGame()
-    {
-        currentState = GameState.Playing;
-        Debug.Log("<color=cyan>🎮 Iniciando Modo Práctica Offline...</color>");
-        
-        SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
-        SceneManager.sceneLoaded += OnPracticeSceneLoaded;
-        
-        SceneManager.LoadScene("PlatformArena");
-    }
-
-    private void OnPracticeSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "PlatformArena")
-        {
-            SceneManager.sceneLoaded -= OnPracticeSceneLoaded;
-            ExecuteSpawning();
-        }
-    }
-
-    private void ExecuteSpawning()
-    {
-        // Limpieza de objetos antiguos
-        GameObject[] oldPlayers = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var p in oldPlayers) DestroyImmediate(p);
-        
-        // BIND: Reconectar las referencias que se perdieron al cambiar de escena
-        if (playerSpawnPoint == null) playerSpawnPoint = GameObject.Find("PlayerSpawn")?.transform;
-        if (enemySpawnPoint == null) enemySpawnPoint = GameObject.Find("EnemySpawn")?.transform;
-        if (gameplayHUD == null) gameplayHUD = Object.FindAnyObjectByType<GameHUD>();
-        
-        // --- AMBIENTE DINÁMICO ---
-        MapGenerator mapDecorator = Object.FindAnyObjectByType<MapGenerator>();
-        if (mapDecorator != null)
-        {
-            var excl = new System.Collections.Generic.List<Transform>();
-            if (playerSpawnPoint != null) excl.Add(playerSpawnPoint);
-            if (enemySpawnPoint != null) excl.Add(enemySpawnPoint);
-            
-            mapDecorator.SetExclusionPoints(excl);
-            mapDecorator.CleanAndGenerate(Random.Range(0, 999999));
-        }
-        
-        // Spawn Local Player
-        if (playerPrefab != null && playerSpawnPoint != null)
-        {
-            GameObject player = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
-            
-            // Spawn AI Agent
-            if (aiAgentPrefab != null && enemySpawnPoint != null)
-            {
-                GameObject ai = Instantiate(aiAgentPrefab, enemySpawnPoint.position, Quaternion.identity);
-                // Connect them
-                var agent = ai.GetComponent<EnemyAgent>();
-                if (agent != null) agent.targetOpponent = player.transform;
-            }
-
-            if (gameplayHUD != null) gameplayHUD.Initialize(player.GetComponent<PlayerController>());
-        }
-    }
 
     /// <summary>
     /// Prepara la sesión de red (Lobby) sin cargar todavía la arena.
@@ -250,6 +186,8 @@ public class GameManager : NetworkBehaviour
             HashSet<int> teamsLeft = new HashSet<int>();
             foreach (var p in activePlayers) teamsLeft.Add(p.teamId.Value);
 
+            if (teamsLeft.Count <= 1)
+            {
                 int winnerTeam = teamsLeft.Count == 1 ? new List<int>(teamsLeft)[0] : -1;
                 ulong winnerClientId = 999; // Default empty
                 string winnerName = "DRAW";
@@ -264,14 +202,13 @@ public class GameManager : NetworkBehaviour
                     else
                     {
                         winnerName = (winnerTeam == 0 ? "TEAM ALPHA" : "TEAM BETA") + " WINS!";
-                        // In team mode, we don't need a single winnerClientId, but we set it to a neutral high value
                     }
                 }
-                
+
                 ShowMatchResultsClientRpc(winnerName, winnerTeam, winnerClientId);
             }
         }
-        else 
+        else
         {
             if (activePlayers.Length <= 1)
             {

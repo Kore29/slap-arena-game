@@ -26,8 +26,6 @@ public class PlayerController : NetworkBehaviour
     // PROPIEDAD PARA HUD
     public float CooldownProgress => Mathf.Clamp01((Time.time - _lastSlapTime) / SlapCooldown);
 
-    // A flag to force local mode even if NetworkManager exists (useful for practice)
-    public bool isLocalForce = false;
 
     private void Awake()
     {
@@ -45,7 +43,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private bool IsNetworkActive => !isLocalForce && NetworkManager.Singleton != null && IsSpawned;
+    private bool IsNetworkActive => NetworkManager.Singleton != null && IsSpawned;
 
     public override void OnNetworkSpawn()
     {
@@ -74,12 +72,20 @@ public class PlayerController : NetworkBehaviour
         // Crear una cámara de emergencia si no hay una libre
         GameObject deathCamObj = new GameObject("SpectatorCamera");
         Camera cam = deathCamObj.AddComponent<Camera>();
+        deathCamObj.tag = "MainCamera"; // Taggear como MainCamera para que WorldNameTag lo encuentre
         deathCamObj.AddComponent<AudioListener>();
 
-        // Posicionar para ver la arena desde arriba
-        deathCamObj.transform.position = new Vector3(0, 35, -25);
-        deathCamObj.transform.rotation = Quaternion.Euler(50, 0, 0);
+        // Posicionar más cerca (Bajamos de 35 a 20 de altura)
+        deathCamObj.transform.position = new Vector3(0, 18, -15);
+        deathCamObj.transform.rotation = Quaternion.Euler(45, 0, 0);
         
+        // MOSTRAR MENÚ DE DERROTA INMEDIATO
+        MatchResultsController resultsUI = Object.FindAnyObjectByType<MatchResultsController>();
+        if (resultsUI != null)
+        {
+            resultsUI.ShowEliminatedEarly();
+        }
+
         // Desbloquear cursor para que puedan ver resultados luego
         UnityEngine.Cursor.lockState = CursorLockMode.None;
         UnityEngine.Cursor.visible = true;
@@ -87,12 +93,6 @@ public class PlayerController : NetworkBehaviour
 
     private void Start()
     {
-        // Si no estamos en red (Práctica local), configuramos el control de todas formas
-        if (!IsNetworkActive)
-        {
-            Debug.Log("Local Practice Player Initialized");
-            SetupLocalPlayer();
-        }
     }
 
     private void SetupLocalPlayer()
