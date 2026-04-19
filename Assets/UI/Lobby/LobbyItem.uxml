@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:vie="UnityEngine.UIElements.Experimental">
-    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 15px; margin-bottom: 8px; background-color: rgba(255, 255, 255, 0.05); border-radius: 10px; height: 50px; flex-shrink: 0;">
+    <ui:Style src="../GlobalStyles.uss" />
+
+    <ui:VisualElement class="lobby-item" style="height: 48px; flex-shrink: 0;">
         
         <ui:VisualElement style="flex-direction: row; align-items: center; flex-grow: 1;">
             <!-- Status Indicator -->
-            <ui:VisualElement name="status-indicator" style="width: 12px; height: 12px; border-radius: 6px; background-color: grey; margin-right: 15px;" />
+            <ui:VisualElement name="status-indicator" style="width: 12px; height: 12px; border-radius: 6px; background-color: #00ff88; margin-right: 12px; border-width: 2px; border-color: rgba(255, 255, 255, 0.2);" />
             
-            <ui:Label name="player-name" text="PLAYER NAME" style="color: white; font-size: 16px; -unity-font-style: bold; margin-right: 10px;" />
+            <ui:Label name="player-name" text="PLAYER NAME" style="color: white; font-size: 15px; -unity-font-style: bold; margin-right: 12px;" />
             
             <!-- Bot Tag -->
-            <ui:VisualElement name="bot-tag" style="display: none; background-color: rgba(0, 209, 255, 0.15); border-width: 1px; border-color: rgba(0, 209, 255, 0.4); padding: 2px 8px; border-radius: 4px;">
-                <ui:Label text="AI" style="color: #00d1ff; font-size: 10px; -unity-font-style: bold;" />
+            <ui:VisualElement name="bot-tag" class="tag-accent" style="display: none;">
+                <ui:Label text="AI" class="tag-accent-label" />
             </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- Contextual switch (individual) -->
-        <ui:Button name="switch-team-btn" text="⇅" style="display: none; background-color: rgba(255, 255, 255, 0.1); color: white; border-radius: 6px; padding: 4px 10px; border-width: 0; font-size: 14px;" />
+        <ui:Button name="switch-team-btn" text="⇅" class="btn-premium" style="display: none; padding: 4px 10px; font-size: 14px; background-color: rgba(255, 255, 255, 0.05);" />
         
     </ui:VisualElement>
 </ui:UXML>

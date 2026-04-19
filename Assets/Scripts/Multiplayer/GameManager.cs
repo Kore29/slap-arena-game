@@ -17,6 +17,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("Game Mode Configuration")]
     public GameModeData currentModeData;
+    public NetworkVariable<bool> isTeamMode = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     
     public enum GameState { MainMenu, Lobby, Playing, Results }
     public GameState currentState = GameState.MainMenu;
@@ -183,6 +184,9 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log("<color=cyan>🌐 Iniciando Spawning de Red...</color>");
         
+        // Sincronizar el modo para los clientes
+        isTeamMode.Value = currentModeData.isTeamBased;
+        
         // --- ESCALADO DINÁMICO ---
         if (arenaTransform == null) arenaTransform = GameObject.Find("Arena")?.transform;
         if (arenaTransform != null && currentModeData != null)
@@ -246,13 +250,25 @@ public class GameManager : NetworkBehaviour
             HashSet<int> teamsLeft = new HashSet<int>();
             foreach (var p in activePlayers) teamsLeft.Add(p.teamId.Value);
 
-            if (teamsLeft.Count <= 1)
-            {
                 int winnerTeam = teamsLeft.Count == 1 ? new List<int>(teamsLeft)[0] : -1;
-                string winnerName = winnerTeam == 0 ? "TEAM ALPHA" : "TEAM BETA";
-                if (winnerTeam == -1) winnerName = "DRAW";
+                ulong winnerClientId = 999; // Default empty
+                string winnerName = "DRAW";
+
+                if (winnerTeam != -1)
+                {
+                    if (currentModeData.maxPlayers == 2 && activePlayers.Length == 1)
+                    {
+                        winnerName = activePlayers[0].nickname.Value.ToString().ToUpper() + " WINS!";
+                        winnerClientId = activePlayers[0].OwnerClientId;
+                    }
+                    else
+                    {
+                        winnerName = (winnerTeam == 0 ? "TEAM ALPHA" : "TEAM BETA") + " WINS!";
+                        // In team mode, we don't need a single winnerClientId, but we set it to a neutral high value
+                    }
+                }
                 
-                ShowMatchResultsClientRpc(winnerName, winnerTeam);
+                ShowMatchResultsClientRpc(winnerName, winnerTeam, winnerClientId);
             }
         }
         else 
@@ -260,22 +276,23 @@ public class GameManager : NetworkBehaviour
             if (activePlayers.Length <= 1)
             {
                 string winnerName = activePlayers.Length == 1 ? activePlayers[0].nickname.Value.ToString() : "DRAW";
-                ShowMatchResultsClientRpc(winnerName, activePlayers.Length == 1 ? activePlayers[0].teamId.Value : -1);
+                ulong winnerClientId = activePlayers.Length == 1 ? activePlayers[0].OwnerClientId : 999;
+                ShowMatchResultsClientRpc(winnerName, -1, winnerClientId);
             }
         }
     }
 
     [ClientRpc]
-    private void ShowMatchResultsClientRpc(string winnerName, int winnerTeam)
+    private void ShowMatchResultsClientRpc(string winnerName, int winnerTeam, ulong winnerClientId)
     {
         SyncGameStateClientRpc(GameState.Results);
-        Debug.Log($"<color=gold>🏆 MATCH OVER! Winner: {winnerName}</color>");
+        Debug.Log($"<color=gold>🏆 MATCH OVER! Winner: {winnerName} (ID: {winnerClientId})</color>");
         
         // Aquí activaremos la UI de resultados (Tarea 4.3)
         MatchResultsController resultsUI = Object.FindAnyObjectByType<MatchResultsController>();
         if (resultsUI != null)
         {
-            resultsUI.ShowResults(winnerName, winnerTeam);
+            resultsUI.ShowResults(winnerName, winnerTeam, winnerClientId);
         }
     }
 }

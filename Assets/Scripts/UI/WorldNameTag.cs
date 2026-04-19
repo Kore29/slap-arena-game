@@ -68,8 +68,20 @@ public class WorldNameTag : NetworkBehaviour
     {
         if (_myTeam == null || nameText == null) return;
         
-        // Lógica simple por ahora: Equipo 0 es azul, Equipo 1 es rojo
-        nameText.color = (_myTeam.teamId.Value == 0) ? allyColor : enemyColor;
+        // Determinar si estamos en un modo de equipos (Sincronizado vía NetworkVariable)
+        bool isTeamBased = GameManager.Instance != null && 
+                          GameManager.Instance.isTeamMode.Value;
+
+        if (!isTeamBased)
+        {
+            // MODO FFA: Todos son enemigos potenciales (Rojo)
+            nameText.color = enemyColor;
+        }
+        else
+        {
+            // MODO EQUIPOS: Respetar la asignación por ID (0=Azul, 1=Rojo)
+            nameText.color = (_myTeam.teamId.Value == 0) ? allyColor : enemyColor;
+        }
     }
 
     private void UpdateName()

@@ -1,0 +1,174 @@
+/* GlobalStyles.uss - Premium Arena Design System */
+
+:root {
+    /* Color Tokens */
+    --color-bg-dark: #000000;
+    --color-primary: #00D1FF;
+    --color-primary-dark: #0084FF;
+    --color-secondary: #FF4747;
+    --color-secondary-dark: #D32F2F;
+    --color-success: #00C853;
+    --color-accent: #FFC400;
+    --color-glass-border: rgba(255, 255, 255, 0.1);
+    --color-text-white: #FFFFFF;
+    --color-text-grey: #BDC3C7;
+
+    /* Sizing & Scaling Tokens - XL Edition */
+    --font-size-hero: 72px;
+    --font-size-subtitle: 28px;
+    --font-size-button: 22px;
+    --font-size-base: 18px;
+    --font-size-tag: 14px;
+    
+    --panel-width-medium: 550px;
+    --panel-padding: 40px;
+    --border-radius-lg: 32px;
+    --border-radius-md: 16px;
+}
+
+/* Screen Root Layout - Stabilized for Variable Resolution */
+.screen-root {
+    flex-grow: 1;
+    background-color: #000000;
+    width: 100%;
+    height: 100%;
+}
+
+.full-screen-scroll {
+    flex-grow: 1;
+}
+
+.full-screen-scroll .unity-scroll-view__content-container {
+    min-height: 100%;
+    flex-direction: column;
+}
+
+.scroll-content-centered {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+/* Base Panel - Glassmorphism Effect */
+.panel-glass {
+    background-color: rgba(30, 34, 42, 0.75);
+    border-radius: var(--border-radius-lg);
+    border-width: 1px;
+    border-color: var(--color-glass-border);
+    border-top-width: 2px;
+    border-top-color: rgba(255, 255, 255, 0.15);
+    padding: var(--panel-padding);
+    flex-shrink: 0;
+}
+
+/* Premium Button Base */
+.btn-premium {
+    color: var(--color-text-white);
+    -unity-font-style: bold;
+    font-size: var(--font-size-button);
+    border-radius: var(--border-radius-md);
+    padding: 12px 25px;
+    border-width: 0;
+    margin: 5px;
+    transition-duration: 0.2s;
+    transition-property: all;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-premium:hover {
+    scale: 1.05;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-premium:active {
+    scale: 0.96;
+    opacity: 0.8;
+}
+
+/* Primary Button Action (Cyan) */
+.btn-primary {
+    background-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: #33DBFF; /* Lighter cyan */
+}
+
+/* Success Button (Green) */
+.btn-success {
+    background-color: var(--color-success);
+}
+
+.btn-success:hover {
+    background-color: #00E676;
+}
+
+/* Danger Button (Red) */
+.btn-danger {
+    background-color: var(--color-secondary);
+}
+
+.btn-danger:hover {
+    background-color: #FF5252;
+}
+
+/* Hero Typography */
+.title-hero {
+    font-size: var(--font-size-hero);
+    color: var(--color-text-white);
+    -unity-font-style: bold;
+    letter-spacing: 8px;
+    -unity-text-align: middle-center;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+}
+
+.subtitle-hero {
+    font-size: var(--font-size-subtitle);
+    color: var(--color-primary);
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Pill / Label Decorations */
+.pill-accent {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 6px 20px;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(0, 209, 255, 0.3);
+}
+
+/* Item Containers */
+.lobby-item {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    margin-bottom: 6px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.lobby-item:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Small Tags (like AI) */
+.tag-accent {
+    background-color: rgba(0, 209, 255, 0.1);
+    border-width: 1px;
+    border-color: rgba(0, 209, 255, 0.3);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.tag-accent-label {
+    color: var(--color-primary);
+    font-size: var(--font-size-tag);
+    -unity-font-style: bold;
+}

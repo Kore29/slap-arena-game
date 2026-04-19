@@ -25,30 +25,48 @@ public class MatchResultsController : MonoBehaviour
         _overlay.style.display = DisplayStyle.None;
     }
 
-    public void ShowResults(string winnerName, int winnerTeam)
+    public void ShowResults(string winnerName, int winnerTeam, ulong winnerClientId)
     {
         _overlay.style.display = DisplayStyle.Flex;
         _winnerLabel.text = winnerName;
 
-        // Comprobar si el equipo local ganó (asumiendo que podemos obtener el equipo del player local)
+        // Sincronizar victoria/derrota
         TeamMember localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject?.GetComponent<TeamMember>();
+        bool isTeamMode = GameManager.Instance != null && GameManager.Instance.isTeamMode.Value;
+        bool didIWin = false;
+
         if (localPlayer != null)
         {
-            if (localPlayer.teamId.Value == winnerTeam)
+            if (isTeamMode)
             {
-                _titleLabel.text = "VICTORY";
-                _titleLabel.style.color = new StyleColor(new Color(1f, 0.8f, 0f)); // Gold
+                didIWin = (localPlayer.teamId.Value == winnerTeam);
             }
             else
             {
-                _titleLabel.text = "DEFEAT";
-                _titleLabel.style.color = new StyleColor(new Color(1f, 0.3f, 0.3f)); // Red
+                // En FFA, la victoria es por ClientId individual
+                didIWin = (NetworkManager.Singleton.LocalClientId == winnerClientId);
             }
         }
-        else if (winnerTeam == -1)
+
+        if (didIWin)
+        {
+            _titleLabel.text = "VICTORY";
+            _titleLabel.style.color = new StyleColor(new Color(1f, 0.84f, 0f)); // Gold
+            _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(1f, 0.5f, 0f, 0.5f));
+            _titleLabel.style.unityTextOutlineWidth = 2f;
+        }
+        else if (winnerTeam == -1 && winnerClientId == 999)
         {
             _titleLabel.text = "DRAW";
             _titleLabel.style.color = Color.white;
+            _titleLabel.style.unityTextOutlineWidth = 0;
+        }
+        else
+        {
+            _titleLabel.text = "DEFEAT";
+            _titleLabel.style.color = new StyleColor(new Color(1f, 0.2f, 0.2f)); // Red
+            _titleLabel.style.unityTextOutlineColor = new StyleColor(new Color(0.5f, 0f, 0f, 0.5f));
+            _titleLabel.style.unityTextOutlineWidth = 2f;
         }
 
         // Solo el Host puede ver el botón de volver (o todos, pero el host controla el cambio de escena)

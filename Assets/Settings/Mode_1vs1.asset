@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameModeData
   modeName: 1 vs 1
   maxPlayers: 2
-  isTeamBased: 0
+  isTeamBased: 1
   playersPerTeam: 1
   victoryCondition: 0
   fillWithBots: 1

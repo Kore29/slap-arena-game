@@ -57,6 +57,34 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    public override void OnNetworkDespawn()
+    {
+        if (IsOwner)
+        {
+            // ACTIVAR CÁMARA DE MUERTE (Espectador)
+            ActivateDeathCamera();
+        }
+        base.OnNetworkDespawn();
+    }
+
+    private void ActivateDeathCamera()
+    {
+        Debug.Log("<color=red>💀 Local Player eliminated! Switching to Spectator Camera.</color>");
+        
+        // Crear una cámara de emergencia si no hay una libre
+        GameObject deathCamObj = new GameObject("SpectatorCamera");
+        Camera cam = deathCamObj.AddComponent<Camera>();
+        deathCamObj.AddComponent<AudioListener>();
+
+        // Posicionar para ver la arena desde arriba
+        deathCamObj.transform.position = new Vector3(0, 35, -25);
+        deathCamObj.transform.rotation = Quaternion.Euler(50, 0, 0);
+        
+        // Desbloquear cursor para que puedan ver resultados luego
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
+    }
+
     private void Start()
     {
         // Si no estamos en red (Práctica local), configuramos el control de todas formas
@@ -259,10 +287,20 @@ public class PlayerController : NetworkBehaviour
             
             // PROTECCIÓN DE FUEGO AMIGO (Task 3.4)
             TeamMember targetTeam = hit.GetComponent<TeamMember>();
-            if (myTeam != null && targetTeam != null && myTeam.teamId.Value == targetTeam.teamId.Value)
+            bool isTeamMode = GameManager.Instance != null && GameManager.Instance.isTeamMode.Value;
+
+            if (myTeam != null && targetTeam != null)
             {
-                Debug.Log($"<color=cyan>Friend hit ignored: {hit.name}</color>");
-                continue;
+                if (isTeamMode)
+                {
+                    // En modo equipos, ignorar si son del mismo ID
+                    if (myTeam.teamId.Value == targetTeam.teamId.Value) continue;
+                }
+                else
+                {
+                    // En modo FFA, solo ignorar si soy yo mismo (failsafe adicional)
+                    if (targetTeam.NetworkObjectId == myTeam.NetworkObjectId) continue;
+                }
             }
 
             Rigidbody targetRb = hit.GetComponent<Rigidbody>();

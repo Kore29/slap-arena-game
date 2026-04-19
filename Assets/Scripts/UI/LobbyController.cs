@@ -10,9 +10,11 @@ public class LobbyController : MonoBehaviour
 
     private VisualElement _teamsParent;
     private VisualElement _ffaParent;
-    private ScrollView _teamAList;
-    private ScrollView _teamBList;
-    private ScrollView _ffaList;
+    private VisualElement _teamAList;
+    private VisualElement _teamBList;
+    private VisualElement _ffaList;
+    private Label _teamALabel;
+    private Label _teamBLabel;
     private Label _roomCodeLabel;
     private Button _startBtn;
     private Button _leaveBtn;
@@ -42,26 +44,29 @@ public class LobbyController : MonoBehaviour
 
         _teamsParent = root.Q<VisualElement>("teams-container");
         _ffaParent = root.Q<VisualElement>("ffa-container");
-        _teamAList = root.Q<ScrollView>("team-a-list");
-        _teamBList = root.Q<ScrollView>("team-b-list");
-        _ffaList = root.Q<ScrollView>("ffa-list");
+        _teamAList = root.Q<VisualElement>("team-a-list");
+        _teamBList = root.Q<VisualElement>("team-b-list");
+        _ffaList = root.Q<VisualElement>("ffa-list");
+        _teamALabel = root.Q<Label>("team-a-label");
+        _teamBLabel = root.Q<Label>("team-b-label");
         _roomCodeLabel = root.Q<Label>("room-code-label");
         _startBtn = root.Q<Button>("start-btn");
         _leaveBtn = root.Q<Button>("leave-btn");
         _switchGlobalBtn = root.Q<Button>("switch-global-btn");
         _removeBotsBtn = root.Q<Button>("remove-bots-btn");
 
-        _leaveBtn.clicked += OnLeaveClicked;
-        _startBtn.clicked += OnStartClicked;
-        _switchGlobalBtn.clicked += OnSwitchGlobalClicked;
-        _removeBotsBtn.clicked += OnRemoveBotsClicked;
+        bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        
+        if (_leaveBtn != null) _leaveBtn.clicked += OnLeaveClicked;
+        if (_startBtn != null) _startBtn.clicked += OnStartClicked;
+        if (_switchGlobalBtn != null) _switchGlobalBtn.clicked += OnSwitchGlobalClicked;
+        if (_removeBotsBtn != null) _removeBotsBtn.clicked += OnRemoveBotsClicked;
 
         // Solo el Host puede usar botones de gestión
-        bool isHost = NetworkManager.Singleton.IsServer;
-        _startBtn.SetEnabled(isHost);
-        _removeBotsBtn.style.display = isHost ? DisplayStyle.Flex : DisplayStyle.None;
+        if (_startBtn != null) _startBtn.SetEnabled(isHost);
+        if (_removeBotsBtn != null) _removeBotsBtn.style.display = isHost ? DisplayStyle.Flex : DisplayStyle.None;
         
-        if (!isHost) _startBtn.style.display = DisplayStyle.None;
+        if (!isHost && _startBtn != null) _startBtn.style.display = DisplayStyle.None;
 
         // Suscribirse a cambios en la lista de red
         if (SessionManager.Instance != null && SessionManager.Instance.lobbySlots != null)
@@ -89,6 +94,21 @@ public class LobbyController : MonoBehaviour
         // Mostrar/Ocultar contenedores principales
         _teamsParent.style.display = isTeamMode ? DisplayStyle.Flex : DisplayStyle.None;
         _ffaParent.style.display = isTeamMode ? DisplayStyle.None : DisplayStyle.Flex;
+
+        // Configurar etiquetas de columnas
+        if (isTeamMode)
+        {
+            if (GameManager.Instance.currentModeData.maxPlayers == 2)
+            {
+                _teamALabel.text = "PLAYER 1";
+                _teamBLabel.text = "PLAYER 2";
+            }
+            else
+            {
+                _teamALabel.text = "TEAM ALPHA";
+                _teamBLabel.text = "TEAM BETA";
+            }
+        }
 
         Debug.Log($"[LobbyUI] Refreshing UI. Mode: {(isTeamMode ? "TEAM" : "FFA")} | Slots Found: {SessionManager.Instance.lobbySlots.Count}");
 
