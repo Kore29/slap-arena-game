@@ -7,6 +7,12 @@ public class PlayerController : NetworkBehaviour
 {
     private Rigidbody _rb;
     private Animator _animator;
+    private Quaternion _targetRotation;
+    
+    // --- NUEVAS VARIABLES DE SINCRONIZACIÓN ---
+    private Vector3 _lastPosition;
+    private float _currentSpeed;
+
     [SerializeField] private float movementSpeed = 12f;
     [SerializeField] private float lookSensitivity = 2f;
     [SerializeField] private Transform playerCamera;
@@ -48,6 +54,7 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        _lastPosition = transform.position;
         
         if (IsOwner)
         {
@@ -122,6 +129,13 @@ public class PlayerController : NetworkBehaviour
 
     private void SetupLocalPlayer()
     {
+        // Aseguramos que el dueño NO es kinematic para que caiga al suelo (Fix Vuelo Spawn)
+        if (_rb != null)
+        {
+            _rb.isKinematic = false;
+            _rb.useGravity = true;
+        }
+
         // Solo bloquear el cursor si estamos jugando (Tarea 1.3)
         if (GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Playing)
         {
@@ -172,6 +186,28 @@ public class PlayerController : NetworkBehaviour
     }
     private void FixedUpdate()
     {
+        // --- CÁLCULO DE VELOCIDAD PARA ANIMACIONES (Multiplayer Fix) ---
+        // Calculamos cuánto se ha movido el personaje independientemente de si es owner o no
+        Vector3 deltaPosition = transform.position - _lastPosition;
+        deltaPosition.y = 0; // Solo nos importa el movimiento horizontal
+        float speed = deltaPosition.magnitude / Time.fixedDeltaTime;
+        _currentSpeed = Mathf.Lerp(_currentSpeed, speed, Time.fixedDeltaTime * 10f); // Suavizado
+        _lastPosition = transform.position;
+
+        // Actualizar animador para TODOS los clientes (Task 3.1)
+        if (_animator != null && _animator.runtimeAnimatorController != null)
+        {
+            // Deteción de suelo más generosa
+            bool isGrounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 1.2f);
+            
+            _animator.SetFloat("Speed", _currentSpeed / movementSpeed);
+            _animator.SetBool("IsFalling", transform.position.y < -1.0f); // Solo falling si estamos en el abismo
+            _animator.SetBool("Grounded", isGrounded); 
+        }
+        else {
+            Debug.LogWarning("ANIM ERROR: No se encuentra el componente Animator en el Player!");
+        }
+
         // PRIORIDAD: Si no somos dueños en Red, ignorar físicas por completo (Fix Espejo)
         if (IsNetworkActive && !IsOwner) return;
 
@@ -183,18 +219,6 @@ public class PlayerController : NetworkBehaviour
         {
             _rb.linearVelocity = Vector3.zero; // Evitar que se deslicen en lobby/resultados
             return;
-        }
-
-        // Enviar velocidad al Animator (Task 3.1)
-        if (_animator != null && _animator.runtimeAnimatorController != null)
-        {
-            // Usamos .velocity para máxima compatibilidad (Task 3.1)
-            float horizontalSpeed = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z).magnitude;
-            _animator.SetFloat("Speed", horizontalSpeed / movementSpeed);
-            _animator.SetBool("IsFalling", transform.position.y < -0.5f);
-        }
-        else {
-            Debug.LogWarning("ANIM ERROR: No se encuentra el componente Animator en el Player!");
         }
 
         HandleMovement();
@@ -238,6 +262,9 @@ public class PlayerController : NetworkBehaviour
             
             // Task 3.1: Dirección desde la cámara
             Vector3 direction = playerCamera != null ? playerCamera.forward : transform.forward;
+            
+            // --- FEEDBACK LOCAL INMEDIATO ---
+            if (_animator != null) _animator.SetTrigger("Slap");
             
             if (IsNetworkActive)
             {
@@ -291,13 +318,11 @@ public class PlayerController : NetworkBehaviour
     {
         if (transform.position.y < -10.0f) return; // No golpear si estamos cayendo
         
-        // Lanzar animación (Task 3.1)
-        if (_animator != null)
-        {
-            _animator.SetTrigger("Slap");
-        }
+        // --- SINCRONIZACIÓN DE ANIMACIÓN (Task 3.1) ---
+        // Avisamos a todos los clientes que este jugador está golpeando
+        PlaySlapAnimationClientRpc();
         
-        Debug.Log("Executing Slap logic...");
+        Debug.Log("Executing Slap logic on Server...");
         
         Vector3 cameraPos = playerCamera != null ? playerCamera.position : transform.position + Vector3.up * 0.8f;
         Vector3 origin = cameraPos + direction; // El centro de la burbuja un metro adelante
@@ -310,45 +335,82 @@ public class PlayerController : NetworkBehaviour
 
         foreach (var hit in hits)
         {
+            // SEGURIDAD MULTIJUGADOR: Ignorar si por casualidad nos golpeamos a nosotros mismos
             if (hit.gameObject == gameObject) continue;
             
-            // PROTECCIÓN DE FUEGO AMIGO (Task 3.4)
+            // --- MEJORA DE DETECCIÓN (Task 3.3) ---
+            // Buscamos el componente en el objeto golpeado o en sus padres (por si el collider está en un hijo)
             TeamMember targetTeam = hit.GetComponent<TeamMember>();
+            if (targetTeam == null) targetTeam = hit.GetComponentInParent<TeamMember>();
+            
             bool isTeamMode = GameManager.Instance != null && GameManager.Instance.isTeamMode.Value;
 
-            if (myTeam != null && targetTeam != null)
+            if (targetTeam != null)
             {
                 if (isTeamMode)
                 {
-                    // En modo equipos, ignorar si son del mismo ID
-                    if (myTeam.teamId.Value == targetTeam.teamId.Value) continue;
+                    if (myTeam != null && myTeam.teamId.Value == targetTeam.teamId.Value) 
+                    {
+                        Debug.Log($"Ignored {hit.name} because they are team {targetTeam.teamId.Value}");
+                        continue;
+                    }
                 }
                 else
                 {
-                    // En modo FFA, solo ignorar si soy yo mismo (failsafe adicional)
-                    if (targetTeam.NetworkObjectId == myTeam.NetworkObjectId) continue;
+                    if (myTeam != null && targetTeam.NetworkObjectId == myTeam.NetworkObjectId) continue;
+                }
+
+                // --- NUEVA LÓGICA DE GOLPE EN RED (Task 3.3) ---
+                PlayerController targetController = hit.GetComponent<PlayerController>();
+                if (targetController == null) targetController = hit.GetComponentInParent<PlayerController>();
+                
+                if (targetController != null)
+                {
+                    Vector3 knockbackForce = direction * slapForce;
+                    targetController.ApplyKnockbackClientRpc(knockbackForce);
+                    Debug.Log($"<color=cyan>Slap RPC request sent to {targetController.name}</color>");
+                    hitSuccessful = true;
                 }
             }
-
-            Rigidbody targetRb = hit.GetComponent<Rigidbody>();
-            if (targetRb != null)
+            else
             {
-                Debug.Log($"<color=yellow>HUBO GOLPE!: {hit.name} | Mass: {targetRb.mass} | Kinematic: {targetRb.isKinematic}</color>");
-                Debug.Log($"Fuerza: {slapForce} | Direccion: {direction}");
-                
-                // Aplicar fuerza de empuje
-                targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
-                hitSuccessful = true;
+                // Si es un objeto físico no-jugador, usamos el método tradicional
+                Rigidbody targetRb = hit.GetComponent<Rigidbody>();
+                if (targetRb != null)
+                {
+                    targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
+                    hitSuccessful = true;
+                }
             }
         }
 
         if (hitSuccessful)
         {
-            // Disparar evento para que la UI se entere
-            OnSlapHit?.Invoke();
+            // Avisar al cliente atacante para que muestre el "ZAS" (Task 3.5)
+            NotifySlapHitClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    public void ApplyKnockbackClientRpc(Vector3 force)
+    {
+        // Solo el dueño local del personaje procesa el empujón
+        if (!IsOwner) return;
+
+        if (_rb != null)
+        {
+            // Nos aseguramos de que no somos kinematic momentáneamente para recibir el impacto
+            bool wasKinematic = _rb.isKinematic;
+            _rb.isKinematic = false;
             
-            // Efecto de kick/retroceso
-            if (IsOwner) StartCoroutine(ApplySlapKick());
+            // Limpiamos velocidad previa para que el impacto se sienta sólido
+            _rb.linearVelocity = Vector3.zero;
+            
+            _rb.AddForce(force, ForceMode.Impulse);
+            Debug.Log($"<color=red>¡RECIBISTE UN GOLPE! Fuerza: {force.magnitude}</color>");
+            
+            // No volvemos a kinematic inmediatamente, dejamos que la física actúe 
+            // El propio Update de movimiento lo volverá a poner a false si es necesario
         }
     }
 
@@ -357,8 +419,33 @@ public class PlayerController : NetworkBehaviour
         if (playerCamera == null) yield break;
         
         Vector3 originalPos = playerCamera.localPosition;
-        playerCamera.localPosition -= Vector3.forward * 0.15f; // Un poco más de kick
+        playerCamera.localPosition -= Vector3.forward * 0.15f; 
         yield return new WaitForSeconds(0.05f);
         playerCamera.localPosition = originalPos;
+    }
+
+    [ClientRpc]
+    private void PlaySlapAnimationClientRpc()
+    {
+        // El dueño ya la ha ejecutado localmente para no tener lag
+        if (IsOwner && IsClient) return;
+
+        if (_animator != null)
+        {
+            _animator.SetTrigger("Slap");
+            Debug.Log($"<color=magenta>!!! ANIMATION RPC received for {name}</color>");
+        }
+    }
+
+    [ClientRpc]
+    private void NotifySlapHitClientRpc()
+    {
+        // Solo el dueño (el que dio el golpe) muestra el mensaje de ZAS y el kick de cámara
+        if (IsOwner)
+        {
+            OnSlapHit?.Invoke();
+            StartCoroutine(ApplySlapKick());
+            Debug.Log("<color=yellow>¡ZAS! Feedback triggered on Attacker's Screen</color>");
+        }
     }
 }

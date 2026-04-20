@@ -277,7 +277,6 @@ GameObject:
   - component: {fileID: 2700574372310781292}
   - component: {fileID: -4802701581159200125}
   - component: {fileID: 4495790669181033372}
-  - component: {fileID: 6773807084719642399}
   m_Layer: 3
   m_Name: PlayerPrefab
   m_TagString: Player
@@ -371,7 +370,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3125174603
+  GlobalObjectIdHash: 3825118462
   InScenePlacedSourceGlobalObjectIdHash: 3825118462
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -598,18 +597,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Components::Unity.Netcode.Components.NetworkRigidbody
---- !u!114 &6773807084719642399
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3001095974145607695}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d105d5a3febd94c85b6a26755f16e855, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerDebugger
 --- !u!1 &6825081854117009552
 GameObject:
   m_ObjectHideFlags: 0
