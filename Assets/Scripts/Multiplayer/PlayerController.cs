@@ -48,10 +48,35 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        
         if (IsOwner)
         {
-            Debug.Log($"Network Player Spawned: {OwnerClientId}");
+            Debug.Log($"Network Player Spawned (OWNER): {OwnerClientId}");
             SetupLocalPlayer();
+        }
+        else
+        {
+            // --- PROTECCIÓN MULTIJUGADOR (Fix Espejo/Cámara) ---
+            // Desactivamos la cámara interna y el AudioListener de los demás jugadores
+            if (playerCamera != null)
+            {
+                Camera cam = playerCamera.GetComponent<Camera>();
+                if (cam != null) cam.enabled = false;
+                
+                AudioListener listener = playerCamera.GetComponent<AudioListener>();
+                if (listener != null) listener.enabled = false;
+                
+                Debug.Log($"Disabled remote player camera/audio for ID: {OwnerClientId}");
+            }
+
+            // --- PROTECCIÓN FÍSICA (Fix Caída Infinita) ---
+            // Si no somos dueños, el Rigidbody debe ser KINEMATIC para no pelear con la red
+            if (_rb != null)
+            {
+                _rb.isKinematic = true;
+                _rb.useGravity = false;
+                Debug.Log($"Physics disabled for remote player ID: {OwnerClientId}");
+            }
         }
     }
 
@@ -122,8 +147,23 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
+        // PRIORIDAD: Si no somos dueños en Red, ignorar input por completo (Fix Espejo)
+        if (IsNetworkActive && !IsOwner) return;
+
         bool hasControl = !IsNetworkActive || IsOwner;
         if (!hasControl) return;
+
+        // SEGURIDAD: Solo permitir control si estamos en estado Playing (Fix Congelación)
+        if (GameManager.Instance != null && GameManager.Instance.currentState != GameManager.GameState.Playing)
+        {
+            // Opcional: Desbloquear cursor si detectamos que no estamos jugando pero somos dueños
+            if (UnityEngine.Cursor.lockState != CursorLockMode.None)
+            {
+                UnityEngine.Cursor.lockState = CursorLockMode.None;
+                UnityEngine.Cursor.visible = true;
+            }
+            return;
+        }
 
         HandleLook();
         HandleSlapInput();
@@ -132,8 +172,18 @@ public class PlayerController : NetworkBehaviour
     }
     private void FixedUpdate()
     {
+        // PRIORIDAD: Si no somos dueños en Red, ignorar físicas por completo (Fix Espejo)
+        if (IsNetworkActive && !IsOwner) return;
+
         bool hasControl = !IsNetworkActive || IsOwner;
         if (!hasControl) return;
+
+        // SEGURIDAD: Bloqueo físico si no estamos jugando
+        if (GameManager.Instance != null && GameManager.Instance.currentState != GameManager.GameState.Playing)
+        {
+            _rb.linearVelocity = Vector3.zero; // Evitar que se deslicen en lobby/resultados
+            return;
+        }
 
         // Enviar velocidad al Animator (Task 3.1)
         if (_animator != null && _animator.runtimeAnimatorController != null)

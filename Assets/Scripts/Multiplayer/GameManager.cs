@@ -101,6 +101,15 @@ public class GameManager : NetworkBehaviour
         if (scene.name == "PlatformArena")
         {
             SceneManager.sceneLoaded -= OnNetworkedSceneLoaded;
+            
+            // OCULTAR LOBBY (Tarea 1.1 - Fix Congelación)
+            LobbyController lobby = Object.FindAnyObjectByType<LobbyController>();
+            if (lobby != null)
+            {
+                lobby.SetVisibility(false);
+                Debug.Log("<color=green>✔ Match Started: Lobby UI hidden.</color>");
+            }
+
             if (NetworkManager.Singleton.IsServer)
             {
                 currentState = GameState.Playing;

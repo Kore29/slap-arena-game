@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 
 public class GameBootstrap : MonoBehaviour
 {
@@ -24,6 +26,16 @@ public class GameBootstrap : MonoBehaviour
         else
         {
             Debug.LogError("❌ GameBootstrap: ¡Falta asignar el Prefab en el Inspector!");
+        }
+
+        // --- AUTO-EASY: Asegurar que hay un EventSystem (Tarea 1.4) ---
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
+        {
+            GameObject es = new GameObject("EventSystem (Auto-Generated)");
+            es.AddComponent<EventSystem>();
+            es.AddComponent<InputSystemUIInputModule>();
+            Debug.Log("<color=orange>⚠ EventSystem faltante: Creado automáticamente con InputSystemUIInputModule.</color>");
+            DontDestroyOnLoad(es);
         }
     }
 }

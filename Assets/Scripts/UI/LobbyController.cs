@@ -27,7 +27,6 @@ public class LobbyController : MonoBehaviour
         if (_roomCodeLabel != null) _roomCodeLabel.text = $"JOIN CODE: {code}";
         Debug.Log($"[LobbyUI] Room code set to: {code}");
     }
-
     private void OnEnable()
     {
         InitializeUI();
@@ -35,6 +34,37 @@ public class LobbyController : MonoBehaviour
         // Desbloquear cursor para interactuar con la UI
         UnityEngine.Cursor.lockState = CursorLockMode.None;
         UnityEngine.Cursor.visible = true;
+    }
+
+    public void SetVisibility(bool visible)
+    {
+        if (lobbyUIDoc == null) lobbyUIDoc = GetComponent<UIDocument>();
+        if (lobbyUIDoc != null && lobbyUIDoc.rootVisualElement != null)
+        {
+            lobbyUIDoc.rootVisualElement.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            
+            // Si lo ocultamos, asegurémonos de que el cursor se bloquee si ya estamos jugando
+            if (!visible && GameManager.Instance != null && GameManager.Instance.currentState == GameManager.GameState.Playing)
+            {
+                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+                UnityEngine.Cursor.visible = false;
+            }
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_leaveBtn != null) _leaveBtn.clicked -= OnLeaveClicked;
+        if (_startBtn != null) _startBtn.clicked -= OnStartClicked;
+        if (_switchGlobalBtn != null) _switchGlobalBtn.clicked -= OnSwitchGlobalClicked;
+        if (_removeBotsBtn != null) _removeBotsBtn.clicked -= OnRemoveBotsClicked;
+
+        // Limpieza de suscripción de Red (Evita errores de referencia nula al cerrar)
+        if (SessionManager.Instance != null && SessionManager.Instance.lobbySlots != null)
+        {
+            // Nota: OnListChanged se limpia automáticamente al destruir el objeto en Netcode,
+            // pero es buena práctica si el objeto se desactiva/reactiva.
+        }
     }
 
     private void InitializeUI()
