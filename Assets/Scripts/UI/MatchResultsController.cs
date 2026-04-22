@@ -60,8 +60,8 @@ public class MatchResultsController : MonoBehaviour
 
         if (_backBtn != null)
         {
-            _backBtn.SetEnabled(NetworkManager.Singleton.IsServer);
-            if (!NetworkManager.Singleton.IsServer) _backBtn.text = "WAITING FOR HOST...";
+            _backBtn.SetEnabled(true);
+            _backBtn.text = "EXIT TO MENU";
         }
     }
 
@@ -141,13 +141,14 @@ public class MatchResultsController : MonoBehaviour
 
     private void OnBackClicked()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        if (GameManager.Instance != null)
         {
-            NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            GameManager.Instance.CleanupAndReturnToMenu();
         }
         else
         {
-            // Fallback para salir rápido si eres cliente y el host no responde
+            // Fallback extremo
+            if (NetworkManager.Singleton != null) NetworkManager.Singleton.Shutdown();
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
     }

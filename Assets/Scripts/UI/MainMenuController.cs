@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Networking;
+using System.Collections;
+using System;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -19,6 +22,7 @@ public class MainMenuController : MonoBehaviour
     private Button _joinBtn;
     private TextField _relayCodeInput;
     private Label _statusLabel;
+    private Label _newsLabel;
     private VisualElement _container;
 
     private void OnEnable()
@@ -37,6 +41,7 @@ public class MainMenuController : MonoBehaviour
         _joinBtn = root.Q<Button>("join-btn");
         _relayCodeInput = root.Q<TextField>("relay-code-input");
         _statusLabel = root.Q<Label>("status-label");
+        _newsLabel = root.Q<Label>("news-label");
 
         _btn1vs1.clicked += On1vs1Clicked;
         _btnTeams.clicked += OnTeamsClicked;
@@ -45,6 +50,38 @@ public class MainMenuController : MonoBehaviour
 
         // Asegurarse de que el lobby esté oculto al inicio
         if (lobbyUIParent != null) lobbyUIParent.SetActive(false);
+
+        StartCoroutine(UpdateNewsAndGreeting());
+    }
+
+    private IEnumerator UpdateNewsAndGreeting()
+    {
+        // 1. Lógica de saludo basada en la hora local
+        int hour = DateTime.Now.Hour;
+        string greeting = "¡Hola!";
+
+        if (hour >= 6 && hour < 12) greeting = "¡Buenos días!";
+        else if (hour >= 12 && hour < 20) greeting = "¡Buenas tardes!";
+        else greeting = "¡Buenas noches!";
+
+        _newsLabel.text = $"{greeting} Cargando estado del servidor...";
+
+        // 2. Uso de UnityWebRequest para validar conexión/noticias
+        // Usamos una URL de prueba confiable
+        using (UnityWebRequest webRequest = UnityWebRequest.Get("https://www.google.com"))
+        {
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+            {
+                _newsLabel.text = $"{greeting} Servidores ONLINE. ¡Listo para la batalla!";
+            }
+            else
+            {
+                _newsLabel.text = $"{greeting} Modo Offline (Sin conexión).";
+                Debug.LogWarning("Error de red: " + webRequest.error);
+            }
+        }
     }
 
     private void OnDisable()

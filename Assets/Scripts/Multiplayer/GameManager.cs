@@ -41,6 +41,37 @@ public class GameManager : NetworkBehaviour
         Debug.Log("<color=green>✔ GameManager Oficial Inicializado y Persistente.</color>");
     }
 
+    private void Start()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnLocalClientDisconnected;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnLocalClientDisconnected;
+        }
+    }
+
+    private void OnLocalClientDisconnected(ulong clientId)
+    {
+        // Si el que se desconecta somos nosotros (o el servidor cerró la conexión)
+        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            Debug.Log("<color=orange>🌐 Local client disconnected from server.</color>");
+            
+            // Si estamos en medio de una partida o en resultados, volvemos al menú
+            if (currentState == GameState.Playing || currentState == GameState.Results)
+            {
+                CleanupAndReturnToMenu();
+            }
+        }
+    }
+
 
     /// <summary>
     /// Prepara la sesión de red (Lobby) sin cargar todavía la arena.
@@ -153,9 +184,18 @@ public class GameManager : NetworkBehaviour
             if (slot.TeamId == 0) spawnPoint = teamASpawns[aIdx++ % teamASpawns.Length].transform;
             else spawnPoint = teamBSpans[bIdx++ % teamBSpans.Length].transform;
 
+            // --- SNAP TO FLOOR (Fix Vuelo Spawn) ---
+            Vector3 finalSpawnPos = spawnPoint.position;
+            // Raycast desde 5 metros arriba del spawn point hacia abajo
+            if (Physics.Raycast(spawnPoint.position + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 15f))
+            {
+                finalSpawnPos = hit.point + Vector3.up * 0.1f; // Pequeño offset para evitar clipping con el suelo
+                Debug.Log($"<color=green>✔ Adjusted spawn for {slot.Nickname} to floor at {finalSpawnPos.y}</color>");
+            }
+
             if (slot.IsBot)
             {
-                GameObject bot = Instantiate(aiAgentPrefab, spawnPoint.position, rotation: spawnPoint.rotation);
+                GameObject bot = Instantiate(aiAgentPrefab, finalSpawnPos, rotation: spawnPoint.rotation);
                 NetworkObject nb = bot.GetComponent<NetworkObject>();
                 nb.Spawn();
                 
@@ -165,7 +205,7 @@ public class GameManager : NetworkBehaviour
             }
             else
             {
-                GameObject player = Instantiate(playerPrefab, spawnPoint.position, rotation: spawnPoint.rotation);
+                GameObject player = Instantiate(playerPrefab, finalSpawnPos, rotation: spawnPoint.rotation);
                 NetworkObject nb = player.GetComponent<NetworkObject>();
                 nb.SpawnAsPlayerObject(slot.ClientId);
 
@@ -249,5 +289,36 @@ public class GameManager : NetworkBehaviour
         {
             resultsUI.ShowResults(winnerName, winnerTeam, winnerClientId);
         }
+    }
+
+    /// <summary>
+    /// Limpia todo el estado de red y juego y vuelve al menú principal.
+    /// </summary>
+    public void CleanupAndReturnToMenu()
+    {
+        Debug.Log("<color=yellow>🧹 Cleaning up game state and returning to Main Menu...</color>");
+        
+        // 1. Reset Session Data
+        if (SessionManager.Instance != null)
+        {
+            SessionManager.Instance.ResetSession();
+        }
+
+        // 2. Reset GameManager state
+        currentState = GameState.MainMenu;
+        
+        // 3. Ensure cursor is free
+        UnityEngine.Cursor.lockState = CursorLockMode.None;
+        UnityEngine.Cursor.visible = true;
+
+        // 4. Shutdown Network (Importante para poder volver a Hostear/Unirse)
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.Log("<color=orange>🌐 NetworkManager Shutdown.</color>");
+        }
+
+        // 5. Load Scene
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 }

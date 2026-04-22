@@ -7,6 +7,7 @@
             <ui:VisualElement class="scroll-content-centered">
                 
                 <ui:Label text="SLAP ARENA ML" class="title" />
+                <ui:Label name="news-label" text="Cargando noticias..." class="subtitle-hero" style="font-size: 16px; color: #ffcc00; margin-bottom: 20px;" />
                 
                 <ui:VisualElement class="menu-box panel-glass">
                     <ui:Label text="CREATE MATCH" class="subtitle-hero" style="margin-top: 0; margin-bottom: 20px; font-size: 14px; -unity-text-align: middle-center;" />

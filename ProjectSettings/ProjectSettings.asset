@@ -833,6 +833,7 @@ PlayerSettings:
   scriptingDefineSymbols:
     Standalone: APP_UI_EDITOR_ONLY
     WebGL: APP_UI_EDITOR_ONLY
+    iPhone: APP_UI_EDITOR_ONLY
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

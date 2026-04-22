@@ -217,9 +217,14 @@ public class PlayerController : NetworkBehaviour
         // SEGURIDAD: Bloqueo físico si no estamos jugando
         if (GameManager.Instance != null && GameManager.Instance.currentState != GameManager.GameState.Playing)
         {
-            _rb.linearVelocity = Vector3.zero; // Evitar que se deslicen en lobby/resultados
+            _rb.linearVelocity = Vector3.zero; // Evitar que se deslicen
+            _rb.angularVelocity = Vector3.zero;
+            _rb.isKinematic = true; // Congelar físicas para no caer al abismo durante resultados
             return;
         }
+        
+        // Restaurar física si volvemos a jugar (por si acaso se reutiliza el objeto)
+        if (_rb.isKinematic) _rb.isKinematic = false;
 
         HandleMovement();
 
@@ -360,22 +365,38 @@ public class PlayerController : NetworkBehaviour
                     if (myTeam != null && targetTeam.NetworkObjectId == myTeam.NetworkObjectId) continue;
                 }
 
-                // --- NUEVA LÓGICA DE GOLPE EN RED (Task 3.3) ---
+                // --- LÓGICA DE IMPACTO MIXTA (Task 3.3) ---
                 PlayerController targetController = hit.GetComponent<PlayerController>();
                 if (targetController == null) targetController = hit.GetComponentInParent<PlayerController>();
                 
                 if (targetController != null)
                 {
+                    // CASO A: Es un jugador humano (usar mensaje de red)
                     Vector3 knockbackForce = direction * slapForce;
                     targetController.ApplyKnockbackClientRpc(knockbackForce);
-                    Debug.Log($"<color=cyan>Slap RPC request sent to {targetController.name}</color>");
+                    Debug.Log($"<color=cyan>Slap RPC sent to Human: {targetController.name}</color>");
                     hitSuccessful = true;
+                }
+                else
+                {
+                    // CASO B: Es una IA o objeto físico (usar fuerza directa en el servidor)
+                    Rigidbody targetRb = hit.GetComponent<Rigidbody>();
+                    if (targetRb == null) targetRb = hit.GetComponentInParent<Rigidbody>();
+                    
+                    if (targetRb != null)
+                    {
+                        targetRb.AddForce(direction * slapForce, ForceMode.Impulse);
+                        Debug.Log($"<color=orange>Slap Physical Force applied to AI/Obj: {hit.name}</color>");
+                        hitSuccessful = true;
+                    }
                 }
             }
             else
             {
-                // Si es un objeto físico no-jugador, usamos el método tradicional
+                // CASO C: Objeto sin TeamMember (ej: cajas, barriles)
                 Rigidbody targetRb = hit.GetComponent<Rigidbody>();
+                if (targetRb == null) targetRb = hit.GetComponentInParent<Rigidbody>();
+                
                 if (targetRb != null)
                 {
                     targetRb.AddForce(direction * slapForce, ForceMode.Impulse);

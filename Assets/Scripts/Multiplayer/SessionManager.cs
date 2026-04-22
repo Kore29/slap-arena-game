@@ -55,6 +55,15 @@ public class SessionManager : NetworkBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    public void ResetSession()
+    {
+        if (lobbySlots != null && IsServer && IsSpawned)
+        {
+            lobbySlots.Clear();
+        }
+        Debug.Log("[SessionManager] Session state reset.");
+    }
+
     public override void OnNetworkSpawn()
     {
         if (IsServer)
