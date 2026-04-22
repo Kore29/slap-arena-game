@@ -39,6 +39,15 @@ public class PlayerController : NetworkBehaviour
         _animator = GetComponent<Animator>();
         gameObject.tag = "Player";
         
+        // --- AJUSTE DE COLLIDER (Fix Vuelo Visual) ---
+        // Subimos el centro del collider para que la base esté más cerca de los pies del modelo
+        CapsuleCollider col = GetComponent<CapsuleCollider>();
+        if (col != null)
+        {
+            // Ajuste empírico: subimos el collider 0.3 unidades para bajar el modelo al suelo
+            col.center = new Vector3(col.center.x, col.center.y + 0.35f, col.center.z);
+        }
+
         // CONFIGURACIÓN FÍSICA: Sincronizada con el Inspector
         if (_rb != null)
         {
